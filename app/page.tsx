@@ -1,69 +1,55 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+import styles from "./styles.module.css";
+// Import React to make JSX work in a module context.
+import React, { useState } from "react";
+import { useCities, useCityWeather } from "./hooks/useWeather";
+// The shape of the weather data is inferred directly from the API response.
 
 export default function Home() {
+  const { data: citiesData, error: cityError } = useCities();
+  // Safely extract array of city names; default to empty array if not loaded yet.
+  const cityNames = citiesData?.cities ?? [];
+  // Local state for the selected city
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const {
+    data: weather,
+    error: weatherErr,
+    isLoading: weatherLoading,
+  } = useCityWeather(selectedCity);
+
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCity(e.target.value || null);
+  };
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file!
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className={styles.container}>
+      <h1 className={styles.title}>Погода</h1>
+      {cityError && <p>Не удалось загрузить города.</p>}
+      {Array.isArray(cityNames) && cityNames.length > 0 && (
+        <select
+          className={styles.select}
+          value={selectedCity ?? ""}
+          onChange={handleChange}
+        >
+          <option value="">Выберите город</option>
+          {cityNames.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      )}
+      {weatherLoading && selectedCity !== null && <p>Загрузка...</p>}
+      {weatherErr && <p>Не удалось загрузить погоду.</p>}
+      {weather && (
+        <div className={styles.weatherInfo}>
+          <p>Город: {weather.name}</p>
+          <p>Максимальная температура: {weather.maxTempC ?? "—"}°C</p>
+          <p>Минимальная температура: {weather.minTempC ?? "—"}°C</p>
+          <p>Осадки: {weather.precipitationMm ?? "—"} мм</p>
+          <p>Давление: {weather.pressureHpa ?? "—"} гПа</p>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      )}
     </div>
   );
 }

@@ -8,24 +8,26 @@
     "start": "next start",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "test": "jest"
+    "test": "jest",
+    "e2e": "playwright test"
   },
   "dependencies": {
+    "@babel/preset-typescript": "^7.23.2",
     "next": "16.4.3",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "swr": "^2.5.1"
   },
   "devDependencies": {
-    "@babel/core": "^8.0.10",
-    "@babel/preset-env": "^8.0.7",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@babel/core": "^7.24.0",
+    "@playwright/test": "^1.45.2",
+    "@types/jest": "^29.5.2",
+    "@babel/preset-env": "^7.23.2",
+    "@types/react": "19.3.0",
     "babel-jest": "^30.5.2",
-    "eslint": "^9",
     "eslint-config-next": "16.4.3",
     "jest": "^30.5.2",
     "oxlint": "^1.90.0",
-    "typescript": "^5"
+    "typescript": "^5.9.3"
   }
 }
