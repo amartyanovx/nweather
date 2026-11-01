@@ -1,0 +1,53 @@
+{
+  "cities": [
+    {
+      "name": "Лунный Берег",
+      "maxTempC": 22,
+      "minTempC": 12,
+      "precipitationMm": 5,
+      "pressureHpa": 1012
+    },
+    {
+      "name": "Водяной Пик",
+      "maxTempC": 18,
+      "minTempC": 8,
+      "precipitationMm": 12,
+      "pressureHpa": 1005
+    },
+    {
+      "name": "Звёздный Край",
+      "maxTempC": 27,
+      "minTempC": 15,
+      "precipitationMm": 0,
+      "pressureHpa": 1023
+    },
+    {
+      "name": "Туманное Утро",
+      "maxTempC": 14,
+      "minTempC": 7,
+      "precipitationMm": 20,
+      "pressureHpa": 999
+    },
+    {
+      "name": "Кристальный Хребет",
+      "maxTempC": 19,
+      "minTempC": 9,
+      "precipitationMm": 3,
+      "pressureHpa": 1018
+    },
+    {
+      "name": "Серебряный Путь",
+      "maxTempC": 23,
+      "minTempC": 13,
+      "precipitationMm": 7,
+      "pressureHpa": 1008
+    },
+    {
+      "name": "Бурный Город",
+      "maxTempC": 16,
+      "minTempC": 10,
+      "precipitationMm": 15,
+      "pressureHpa": 1014
+    }
+  ]
+}
