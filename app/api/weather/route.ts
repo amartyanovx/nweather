@@ -2,9 +2,6 @@ import { NextResponse } from "next/server";
 import fs from "node:fs/promises";
 import path from "node:path";
 
-/**
- * API route that serves weather data from the mock JSON file.
- */
 interface WeatherCity {
   name: string;
   maxTempC?: number;
@@ -18,6 +15,7 @@ export async function GET(request: Request) {
   try {
     const content = await fs.readFile(mockPath, { encoding: "utf-8" });
     const data = JSON.parse(content) as { cities: WeatherCity[] };
+
     const url = new URL(request.url);
     const cityName = url.searchParams.get("city");
     if (cityName) {
@@ -25,8 +23,20 @@ export async function GET(request: Request) {
       if (!cityData) {
         return new NextResponse("City not found", { status: 404 });
       }
-      return NextResponse.json(cityData);
+      const days = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
+      const daily = days.map((day, idx) => ({
+        day,
+        maxTempC: cityData.maxTempC !== undefined ? cityData.maxTempC + idx : undefined,
+        minTempC: cityData.minTempC !== undefined ? cityData.minTempC + idx : undefined,
+        precipitationMm:
+          cityData.precipitationMm !== undefined
+            ? Math.max(0, cityData.precipitationMm - idx)
+            : undefined,
+        pressureHpa: cityData.pressureHpa !== undefined ? cityData.pressureHpa + idx * 2 : undefined,
+      }));
+      return NextResponse.json({ name: cityData.name, daily });
     }
+
     const cityNames = data.cities.map((c) => c.name);
     return NextResponse.json({ cities: cityNames });
   } catch (err) {
