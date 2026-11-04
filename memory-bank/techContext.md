@@ -2,19 +2,20 @@
 
 ## Технологии
 
-| Категория | Технология | Версия | Назначение |
-|-----------|-----------|--------|------------|
-| Фреймворк | Next.js | 16.4.3 | App Router, SSR, API routes |
-| UI | React + ReactDOM | 19.3.0 | Компоненты, хуки, рендеринг |
-| Язык | TypeScript | 5.9.3 | Статическая типизация |
-| Data Fetching | SWR | ^2.5.1 | Кэширование и фетчинг данных |
-| Линтинг | oxlint | ^1.90.0 | Проверка качества кода |
-| Unit-тесты | Jest | ^30.5.2 | Тестирование компонентов и утилит |
-| E2E-тесты | Playwright | ^1.45.2 | Сквозное тестирование |
+| Категория     | Технология       | Версия  | Назначение                        |
+| ------------- | ---------------- | ------- | --------------------------------- |
+| Фреймворк     | Next.js          | 16.4.3  | App Router, SSR, API routes       |
+| UI            | React + ReactDOM | 19.3.0  | Компоненты, хуки, рендеринг       |
+| Язык          | TypeScript       | 5.9.3   | Статическая типизация             |
+| Data Fetching | SWR              | ^2.5.1  | Кэширование и фетчинг данных      |
+| Линтинг       | oxlint           | ^1.90.0 | Проверка качества кода            |
+| Unit-тесты    | Jest             | ^30.5.2 | Тестирование компонентов и утилит |
+| E2E-тесты     | Playwright       | ^1.45.2 | Сквозное тестирование             |
 
 ## Зависимости
 
 ### Production
+
 ```json
 {
   "next": "16.4.3",
@@ -25,6 +26,7 @@
 ```
 
 ### Development
+
 ```json
 {
   "@babel/core": "^7.24.0",
@@ -44,6 +46,7 @@
 ## Настройка окружения
 
 ### Path Alias
+
 ```json
 {
   "compilerOptions": {
@@ -55,6 +58,7 @@
 ```
 
 ### TypeScript Configuration
+
 - Target: ES2017
 - Strict mode: enabled
 - JSX: react-jsx (automatic runtime)
@@ -63,17 +67,18 @@
 
 ## Команды разработки
 
-| Команда | Описание |
-|---------|----------|
-| `npm run dev` | Запуск dev-сервера (next dev) |
-| `npm run build` | Production build (next build) |
-| `npm start` | Запуск production-сервера |
-| `npm run lint` | Линтинг через oxlint |
-| `npm run lint:fix` | Автофикс линтинга |
-| `npm run test` | Unit-тесты через Jest |
-| `npm run e2e` | E2E-тесты через Playwright |
+| Команда            | Описание                      |
+| ------------------ | ----------------------------- |
+| `npm run dev`      | Запуск dev-сервера (next dev) |
+| `npm run build`    | Production build (next build) |
+| `npm start`        | Запуск production-сервера     |
+| `npm run lint`     | Линтинг через oxlint          |
+| `npm run lint:fix` | Автофикс линтинга             |
+| `npm run test`     | Unit-тесты через Jest         |
+| `npm run e2e`      | E2E-тесты через Playwright    |
 
 ## Jest Configuration
+
 - **Transform**: babel-jest для .ts/.tsx файлов
 - **Test Match**: `**/*.test.[jt]s`
 - **Coverage**: собирается в папку `coverage/`

@@ -1,11 +1,8 @@
-import useSWR from "swr";
-import { jsonFetcher } from "../../lib/fetcher";
+import useSWR from 'swr';
+import { jsonFetcher } from '../../lib/fetcher';
 
 export const useCities = () => {
-  return useSWR<{ cities: string[] }>(
-    "/api/weather",
-    jsonFetcher
-  );
+  return useSWR<{ cities: string[] }>('/api/weather', jsonFetcher);
 };
 
 export const useCityWeather = (city: string | null) => {
@@ -15,8 +12,5 @@ export const useCityWeather = (city: string | null) => {
     minTempC?: number;
     precipitationMm?: number;
     pressureHpa?: number;
-  }>(
-    city ? `/api/weather?city=${encodeURIComponent(city)}` : null,
-    jsonFetcher
-  );
+  }>(city ? `/api/weather?city=${encodeURIComponent(city)}` : null, jsonFetcher);
 };

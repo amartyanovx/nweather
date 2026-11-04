@@ -1,5 +1,5 @@
-import useSWR from "swr";
-import { jsonFetcher } from "../../lib/fetcher";
+import useSWR from 'swr';
+import { jsonFetcher } from '../../lib/fetcher';
 
 export interface WeatherDay {
   day: string;
@@ -21,15 +21,7 @@ export const useCityWeeklyWeather = (city: string | null) => {
     pressureHpa?: number;
   }>(city ? `/api/weather?city=${encodeURIComponent(city)}` : null, jsonFetcher);
 
-  const days = [
-    "Понедельник",
-    "Вторник",
-    "Среда",
-    "Четверг",
-    "Пятница",
-    "Суббота",
-    "Воскресенье",
-  ];
+  const days = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
 
   const weekly: WeatherDay[] | undefined = data
     ? days.map((day, idx) => ({
@@ -37,12 +29,8 @@ export const useCityWeeklyWeather = (city: string | null) => {
         maxTempC: data.maxTempC !== undefined ? data.maxTempC + idx : undefined,
         minTempC: data.minTempC !== undefined ? data.minTempC + idx : undefined,
         precipitationMm:
-          data.precipitationMm !== undefined
-            ? Math.max(0, data.precipitationMm - idx)
-            : undefined,
-        pressureHpa: data.pressureHpa !== undefined
-          ? data.pressureHpa + idx * 2
-          : undefined,
+          data.precipitationMm !== undefined ? Math.max(0, data.precipitationMm - idx) : undefined,
+        pressureHpa: data.pressureHpa !== undefined ? data.pressureHpa + idx * 2 : undefined,
       }))
     : undefined;
 

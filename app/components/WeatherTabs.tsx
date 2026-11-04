@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React from "react";
-import styles from "../styles.module.css";
+import React from 'react';
+import styles from '../styles.module.css';
 
 interface Props {
   days: string[];
@@ -15,7 +15,7 @@ export default function WeatherTabs({ days, selectedIndex, onSelect }: Props) {
       {days.map((day, idx) => (
         <button
           key={day}
-          className={`${styles.tab} ${idx === selectedIndex ? styles.active : ""}`}
+          className={`${styles.tab} ${idx === selectedIndex ? styles.active : ''}`}
           onClick={() => onSelect(idx)}
         >
           {day}

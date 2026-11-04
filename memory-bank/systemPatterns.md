@@ -32,21 +32,25 @@ nweather/
 ## Ключевые технические решения
 
 ### 1. Data Fetching паттерн (SWR + jsonFetcher)
+
 - `jsonFetcher<T>(url)` — универсальная функция для fetch с типизацией
 - SWR хуки кэшируют данные автоматически, предотвращая повторные запросы
 - Conditional fetching: null ключ пропускает запрос
 
 ### 2. Server Components по умолчанию
+
 - `layout.tsx` и API route — server components (без `'use client'`)
 - `page.tsx` — client component из-за useState/useEffect
 - `WeatherTabs.tsx` — client component из-за onClick обработчиков
 
 ### 3. Mock Data Pattern
+
 - Данные хранятся в `mocks/weatherMock.json`
 - API route читает файл через `fs.readFile()` при каждом запросе
 - Недельный прогноз генерируется динамически: базовые значения + индекс дня
 
 ### 4. Компонентная архитектура
+
 - Один компонент = один файл
 - Интерфейсы для пропсов (WeatherTabs.Props)
 - CSS Modules для изоляции стилей
@@ -70,8 +74,9 @@ GET /api/weather?city=Лунный%20Берег → { name, daily: WeatherDay[] 
 ```
 
 Дни недели генерируются как:
+
 - maxTempC = base + idx (растёт каждый день)
-- minTempC = base + idx (растёт каждый день)  
+- minTempC = base + idx (растёт каждый день)
 - precipitationMm = Math.max(0, base - idx) (убывает)
 - pressureHpa = base + idx * 2 (растёт)
 

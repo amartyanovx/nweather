@@ -9,15 +9,16 @@ test('weather data displays correctly for selected cities', async ({ page }) => 
   // Get list of options (excluding placeholder)
   const options = await select.locator('option').allTextContents();
   // Pick the first real city
-    if (options.length > 1) {
-      const city = options[1];
-      await select.selectOption({ label: city });
+  if (options.length > 1) {
+    const city = options[1];
 
-      // Wait for the API call to complete for the selected city
-      await page.waitForResponse(`http://localhost:3000/api/weather?city=${encodeURIComponent(city)}`);
-      const weatherInfo = page.locator('.weatherInfo');
-      await expect(weatherInfo).toBeVisible();
-      // Simple check that the city name appears in the info
-      await expect(weatherInfo).toContainText(city);
+    // Set up response interception before selecting
+    await Promise.all([
+      page.waitForResponse((resp) => resp.url().includes('/api/weather') && resp.status() === 200),
+      select.selectOption({ label: city }),
+    ]);
+
+    // Wait for the weather info to appear by looking for 'Город:' text with city name
+    await expect(page.locator(`text=Город: ${city}`)).toBeVisible({ timeout: 10000 });
   }
 });
