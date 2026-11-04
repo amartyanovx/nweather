@@ -14,12 +14,12 @@ nweather — приложение погоды на Next.js 16 App Router с Typ
 
 - Строгая типизация TypeScript (без `any`)
 - SSR-first подход с минимальным использованием Client Components
-- Mock данные из локального JSON-файла (`mocks/weatherMock.json`)
+- Данные хранятся в SQLite БД (`dev.db`) через Drizzle ORM
 - Поддержка 7 городов с вымышленными названиями
 
 ## Архитектурные решения
 
-- API route для работы с mock данными → `app/api/weather/route.ts`
+- API route для работы с БД → `app/api/weather/route.ts`
 - SWR хуки для кэширования и фетчинга → `app/hooks/`
 - Server Components по умолчанию, Client Components только где нужна интерактивность
 

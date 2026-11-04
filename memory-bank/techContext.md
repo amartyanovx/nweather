@@ -11,6 +11,8 @@
 | Линтинг       | oxlint           | ^1.90.0 | Проверка качества кода            |
 | Unit-тесты    | Jest             | ^30.5.2 | Тестирование компонентов и утилит |
 | E2E-тесты     | Playwright       | ^1.45.2 | Сквозное тестирование             |
+| База данных   | SQLite           |latest | Локальная файловая БД              |
+| ORM           | Drizzle          | latest | Типизированные запросы к БД        |
 
 ## Зависимости
 
@@ -21,7 +23,9 @@
   "next": "16.4.3",
   "react": "19.3.0",
   "react-dom": "19.3.0",
-  "swr": "^2.5.1"
+  "swr": "^2.5.1",
+  "drizzle-orm": "latest",
+  "better-sqlite3": "latest"
 }
 ```
 
@@ -39,7 +43,9 @@
   "eslint-config-next": "16.4.3",
   "jest": "^30.5.2",
   "oxlint": "^1.90.0",
-  "typescript": "^5.9.3"
+  "typescript": "^5.9.3",
+  "@types/better-sqlite3": "latest",
+  "drizzle-kit": "latest"
 }
 ```
 

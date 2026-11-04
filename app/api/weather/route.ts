@@ -1,55 +1,63 @@
 import { NextResponse } from 'next/server';
-import fs from 'node:fs/promises';
-import path from 'node:path';
+import { eq } from 'drizzle-orm';
+import { db } from '@/lib/db';
+import { cities, dailyWeather } from '@/lib/schema';
 
-interface WeatherCity {
-  name: string;
-  maxTempC?: number;
-  minTempC?: number;
-  precipitationMm?: number;
-  pressureHpa?: number;
+const days = [
+  'Понедельник',
+  'Вторник',
+  'Среда',
+  'Четверг',
+  'Пятница',
+  'Суббота',
+  'Воскресенье',
+] as const;
+
+interface WeatherDay {
+  day: string;
+  maxTempC?: number | null;
+  minTempC?: number | null;
+  precipitationMm?: number | null;
+  pressureHpa?: number | null;
 }
 
 export async function GET(request: Request) {
-  const mockPath = path.join(process.cwd(), 'mocks', 'weatherMock.json');
   try {
-    const content = await fs.readFile(mockPath, { encoding: 'utf-8' });
-    const data = JSON.parse(content) as { cities: WeatherCity[] };
-
     const url = new URL(request.url);
     const cityName = url.searchParams.get('city');
+
     if (cityName) {
-      const cityData = data.cities.find((c) => c.name === cityName);
-      if (!cityData) {
+      const cityRow = await db.select().from(cities).where(eq(cities.name, cityName)).limit(1);
+
+      if (!cityRow.length) {
         return new NextResponse('City not found', { status: 404 });
       }
-      const days = [
-        'Понедельник',
-        'Вторник',
-        'Среда',
-        'Четверг',
-        'Пятница',
-        'Суббота',
-        'Воскресенье',
-      ];
-      const daily = days.map((day, idx) => ({
-        day,
-        maxTempC: cityData.maxTempC !== undefined ? cityData.maxTempC + idx : undefined,
-        minTempC: cityData.minTempC !== undefined ? cityData.minTempC + idx : undefined,
-        precipitationMm:
-          cityData.precipitationMm !== undefined
-            ? Math.max(0, cityData.precipitationMm - idx)
-            : undefined,
-        pressureHpa:
-          cityData.pressureHpa !== undefined ? cityData.pressureHpa + idx * 2 : undefined,
-      }));
-      return NextResponse.json({ name: cityData.name, daily });
+
+      const weekData = await db
+        .select()
+        .from(dailyWeather)
+        .where(eq(dailyWeather.cityId, cityRow[0].id))
+        .orderBy(dailyWeather.dayOfWeek);
+
+      const daily: WeatherDay[] = days.map((day, idx) => {
+        const dayData = weekData.find((d) => d.dayOfWeek === idx);
+        return {
+          day,
+          maxTempC: dayData?.maxTempC ?? undefined,
+          minTempC: dayData?.minTempC ?? undefined,
+          precipitationMm: dayData?.precipitationMm ?? undefined,
+          pressureHpa: dayData?.pressureHpa ?? undefined,
+        };
+      });
+
+      return NextResponse.json({ name: cityRow[0].name, daily });
     }
 
-    const cityNames = data.cities.map((c) => c.name);
+    const rows = await db.select().from(cities);
+    const cityNames = rows.map((r) => r.name);
     return NextResponse.json({ cities: cityNames });
   } catch (err) {
-    console.error('Failed to load weather mock', err);
+    console.error('Failed to fetch weather data from DB', err);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }

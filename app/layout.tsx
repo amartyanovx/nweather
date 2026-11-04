@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import './globals.css';
-/* removed comment */
 import BaseContainer from './components/BaseContainer';
 
 export const metadata: Metadata = {
