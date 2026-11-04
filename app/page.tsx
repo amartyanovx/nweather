@@ -1,21 +1,23 @@
 "use client";
 import styles from "./styles.module.css";
-// Import React to make JSX work in a module context.
-import React, { useState } from "react";
-import { useCities, useCityWeather } from "./hooks/useWeather";
-// The shape of the weather data is inferred directly from the API response.
+import React, { useState, useEffect } from "react";
+import { useCities } from "./hooks/useWeather";
+import { useCityWeeklyWeather } from "./hooks/useCityWeeklyWeather";
+import WeatherTabs from "./components/WeatherTabs";
 
 export default function Home() {
   const { data: citiesData, error: cityError } = useCities();
-  // Safely extract array of city names; default to empty array if not loaded yet.
   const cityNames = citiesData?.cities ?? [];
-  // Local state for the selected city
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
-  const {
-    data: weather,
-    error: weatherErr,
-    isLoading: weatherLoading,
-  } = useCityWeather(selectedCity);
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+
+  useEffect(() => {
+    const d = new Date();
+    setSelectedDayIndex((d.getDay() + 6) % 7);
+  }, []);
+
+  const { data: weekly, error: weatherErr, isLoading: weatherLoading } =
+    useCityWeeklyWeather(selectedCity);
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedCity(e.target.value || null);
@@ -41,14 +43,32 @@ export default function Home() {
       )}
       {weatherLoading && selectedCity !== null && <p>Загрузка...</p>}
       {weatherErr && <p>Не удалось загрузить погоду.</p>}
-      {weather && (
-        <div className={styles.weatherInfo}>
-          <p>Город: {weather.name}</p>
-          <p>Максимальная температура: {weather.maxTempC ?? "—"}°C</p>
-          <p>Минимальная температура: {weather.minTempC ?? "—"}°C</p>
-          <p>Осадки: {weather.precipitationMm ?? "—"} мм</p>
-          <p>Давление: {weather.pressureHpa ?? "—"} гПа</p>
-        </div>
+      {weekly && (
+        <> 
+          <WeatherTabs
+            days={weekly.map((d) => d.day)}
+            selectedIndex={selectedDayIndex}
+            onSelect={setSelectedDayIndex}
+          />
+          <div className={styles.weatherInfo}>
+            <h3>{weekly[selectedDayIndex].day}</h3>
+            <p>Город: {selectedCity}</p>
+            <p>
+              Максимальная температура:{" "}
+              {weekly[selectedDayIndex].maxTempC ?? "—"}°C
+            </p>
+            <p>
+              Минимальная температура:{" "}
+              {weekly[selectedDayIndex].minTempC ?? "—"}°C
+            </p>
+            <p>
+              Осадки: {weekly[selectedDayIndex].precipitationMm ?? "—"} мм
+            </p>
+            <p>
+              Давление: {weekly[selectedDayIndex].pressureHpa ?? "—"} гПа
+            </p>
+          </div>
+        </>
       )}
     </div>
   );
