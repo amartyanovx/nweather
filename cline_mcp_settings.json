@@ -4,10 +4,7 @@
       "type": "stdio",
       "command": "npx",
       "timeout": 30,
-      "args": [
-        "-y",
-        "@playwright/mcp@latest"
-      ],
+      "args": ["-y", "@playwright/mcp@latest"],
       "disabled": false
     }
   }

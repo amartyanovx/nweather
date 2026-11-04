@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+out/
+build/
+dist/
+
+# Next.js generated files
+next-env.d.ts
+
+# IDE and editor configs
+.vscode/
+.idea/
+
+# Test coverage reports
+coverage/
+.nyc_output/
+
+# Lock files (optional - uncomment if needed)
+# package-lock.json
+# yarn.lock
+
+# Other generated/static files
+*.min.js
+*.min.css
