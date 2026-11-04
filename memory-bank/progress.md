@@ -13,6 +13,9 @@
 - [x] TypeScript строгая типизация
 - [x] Jest конфигурация для unit-тестов
 - [x] Playwright конфигурация для E2E-тестов
+- [x] SQLite база данных (`dev.db`)
+- [x] Drizzle ORM: схема `lib/schema.ts`, подключение `lib/db.ts`
+- [x] Seed-скрипт `lib/seed.ts` — загрузка городов из mock в БД
 
 ## Что нужно построить 🚧
 
@@ -21,6 +24,8 @@
 - [ ] Suspense boundaries для оптимизации стриминга
 - [ ] Обработка edge cases: пустой ответ, timeout, network error
 - [ ] Интеграция с реальным Weather API (замена mock данных)
+- [x] Интеграция SQLite + Drizzle ORM — база данных создана, seed выполнен
+- [ ] Замена API route на запросы к БД через Drizzle (шаг 5, пока отложен)
 
 ## Текущий статус 🟡
 

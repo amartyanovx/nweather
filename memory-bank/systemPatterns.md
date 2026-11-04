@@ -91,3 +91,36 @@ page.tsx
 api/weather/route.ts → mocks/weatherMock.json (через fs)
 useCityWeeklyWeather.ts дублирует логику генерации дней из API route
 ```
+
+## Работа с базой данных
+
+### SQLite + Drizzle ORM
+
+- **База данных:** `dev.db` — локальный файл SQLite в корне проекта
+- **Подключение:** `lib/db.ts` — singleton через модуль Node.js (один экземпляр на процесс)
+- **Схема:** `lib/schema.ts` — таблица `cities` с полями: id, name, maxTempC, minTempC, precipitationMm, pressureHpa
+- **Seed-скрипт:** `lib/seed.ts` — загружает города из `mocks/weatherMock.json` в БД через Drizzle ORM
+- **Конфигурация:** `drizzle.config.ts` — настройки drizzle-kit для SQLite
+
+### Паттерн подключения к БД
+
+```typescript
+// lib/db.ts
+import Database from 'better-sqlite3';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+
+const sqlite = new Database(path.join(process.cwd(), 'dev.db'));
+export const db = drizzle(sqlite);
+```
+
+### Таблица cities
+
+| Поле          | Тип      | Описание              |
+|---------------|----------|-----------------------|
+| id            | INTEGER  | Первичный ключ (авто)|
+| name          | TEXT     | Название города       |
+| maxTempC      | REAL     | Максимальная температура |
+| minTempC      | REAL     | Минимальная температура   |
+| precipitation_mm | REAL | Осадки в мм           |
+| pressure_hpa  | REAL     | Давление в гПа        |
+
