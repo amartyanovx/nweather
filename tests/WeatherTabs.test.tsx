@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import WeatherTabs from '../app/components/WeatherTabs';
+import WeatherTabs from '../src/components/WeatherTabs';
 
 describe('WeatherTabs component', () => {
   const days = ['Понедельник', 'Вторник', 'Среда'];

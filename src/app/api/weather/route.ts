@@ -2,24 +2,8 @@ import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { cities, dailyWeather } from '@/lib/schema';
-
-const days = [
-  'Понедельник',
-  'Вторник',
-  'Среда',
-  'Четверг',
-  'Пятница',
-  'Суббота',
-  'Воскресенье',
-] as const;
-
-interface WeatherDay {
-  day: string;
-  maxTempC?: number | null;
-  minTempC?: number | null;
-  precipitationMm?: number | null;
-  pressureHpa?: number | null;
-}
+import { DAYS_OF_WEEK } from '@/lib/constants';
+import type { WeatherDay } from '@/types/weather';
 
 export async function GET(request: Request) {
   try {
@@ -39,7 +23,7 @@ export async function GET(request: Request) {
         .where(eq(dailyWeather.cityId, cityRow[0].id))
         .orderBy(dailyWeather.dayOfWeek);
 
-      const daily: WeatherDay[] = days.map((day, idx) => {
+      const daily: WeatherDay[] = DAYS_OF_WEEK.map((day, idx) => {
         const dayData = weekData.find((d) => d.dayOfWeek === idx);
         return {
           day,
