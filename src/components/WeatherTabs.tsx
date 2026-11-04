@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import styles from '../styles.module.css';
+import styles from '@/styles/page.module.css';
 
 interface Props {
   days: string[];

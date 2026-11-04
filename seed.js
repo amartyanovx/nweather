@@ -52,20 +52,20 @@ for (const city of data.cities) {
 // Generate realistic weekly weather for each city
 const days = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
 const insertDaily = sqlite.prepare(
-  'INSERT INTO daily_weather (city_id, day_of_week, max_temp_c, min_temp_c, precipitation_mm, pressure_hpa) VALUES (@cityId, @dayOfWeek, @maxTempC, @minTempC, @precipitationMm, @pressureHpa)'
+  'INSERT INTO daily_weather (city_id, day_of_week, max_temp_c, min_temp_c, precipitation_mm, pressure_hpa) VALUES (@cityId, @dayOfWeek, @maxTempC, @minTempC, @precipitationMm, @pressureHpa)',
 );
 
 // Get city IDs
 const getCities = sqlite.prepare('SELECT id, name FROM cities').all();
 for (const city of data.cities) {
-  const cityRow = getCities.find(c => c.name === city.name);
+  const cityRow = getCities.find((c) => c.name === city.name);
   if (!cityRow) continue;
 
   const cityId = cityRow.id;
   // Generate varied weather for each day with some randomness based on base values
   for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
     // Temperature variation: ±3°C from base, slight upward trend mid-week
-    const tempVariation = Math.round((Math.sin(dayIdx * 0.8) * 2) + (dayIdx > 3 ? -1 : 0));
+    const tempVariation = Math.round(Math.sin(dayIdx * 0.8) * 2 + (dayIdx > 3 ? -1 : 0));
     const maxTemp = city.maxTempC + tempVariation;
     const minTemp = city.minTempC + Math.round(tempVariation * 0.7);
 
@@ -73,14 +73,17 @@ for (const city of data.cities) {
     let precipMM = null;
     if (city.precipitationMm > 5) {
       // Rainy city: more frequent precipitation
-      precipMM = dayIdx % 3 === 0 ? Math.round(city.precipitationMm * (0.6 + Math.random() * 0.8)) : Math.round(Math.random() * 3);
+      precipMM =
+        dayIdx % 3 === 0
+          ? Math.round(city.precipitationMm * (0.6 + Math.random() * 0.8))
+          : Math.round(Math.random() * 3);
     } else {
       // Dry city: occasional light rain
       precipMM = Math.random() < 0.2 ? Math.round(2 + Math.random() * 5) : 0;
     }
 
     // Pressure: slight variation around base, typical range ±10 hPa
-    const pressure = city.pressureHpa + Math.round((Math.sin(dayIdx * 1.2) * 8));
+    const pressure = city.pressureHpa + Math.round(Math.sin(dayIdx * 1.2) * 8);
 
     insertDaily.run({
       cityId,
@@ -98,12 +101,14 @@ const citiesCount = sqlite.prepare('SELECT COUNT(*) as cnt FROM cities').get().c
 const dailyCount = sqlite.prepare('SELECT COUNT(*) as cnt FROM daily_weather').get().cnt;
 console.log(`Seeded ${citiesCount} cities with ${dailyCount} daily weather records`);
 
-const report = sqlite.prepare(
-  `SELECT c.name, dw.day_of_week, dw.max_temp_c, dw.min_temp_c, dw.precipitation_mm, dw.pressure_hpa
+const report = sqlite
+  .prepare(
+    `SELECT c.name, dw.day_of_week, dw.max_temp_c, dw.min_temp_c, dw.precipitation_mm, dw.pressure_hpa
    FROM cities c
    LEFT JOIN daily_weather dw ON c.id = dw.city_id
-   ORDER BY c.name, dw.day_of_week`
-).all();
+   ORDER BY c.name, dw.day_of_week`,
+  )
+  .all();
 
 console.log('\nWeekly weather data:');
 let currentCity = '';
@@ -115,7 +120,7 @@ for (const row of report) {
   const dayName = days[row.day_of_week];
   console.log(
     `  ${dayName.padEnd(12)}: ${row.max_temp_c}°C / ${row.min_temp_c}°C, ` +
-    `${row.precipitation_mm ?? '—'}mm, ${row.pressure_hpa} hPa`
+      `${row.precipitation_mm ?? '—'}mm, ${row.pressure_hpa} hPa`,
   );
 }
 

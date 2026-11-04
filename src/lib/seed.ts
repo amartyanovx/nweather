@@ -67,7 +67,10 @@ export async function seed() {
 
       let precipMM: number;
       if (city.precipitationMm > 5) {
-        precipMM = dayIdx % 3 === 0 ? Math.round(city.precipitationMm * (0.6 + Math.random() * 0.8)) : Math.round(Math.random() * 3);
+        precipMM =
+          dayIdx % 3 === 0
+            ? Math.round(city.precipitationMm * (0.6 + Math.random() * 0.8))
+            : Math.round(Math.random() * 3);
       } else {
         precipMM = Math.random() < 0.2 ? Math.round(2 + Math.random() * 5) : 0;
       }
@@ -90,4 +93,3 @@ export async function seed() {
 }
 
 seed();
-

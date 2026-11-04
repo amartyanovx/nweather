@@ -14,13 +14,13 @@
 
 В твоём распоряжении пять специалистов:
 
-| Роль | Инструкция |
-|------|------------|
-| Архитектор | [roles/architect.md](roles/architect.md) |
+| Роль        | Инструкция                               |
+| ----------- | ---------------------------------------- |
+| Архитектор  | [roles/architect.md](roles/architect.md) |
 | Разработчик | [roles/developer.md](roles/developer.md) |
-| Тестировщик | [roles/tester.md](roles/tester.md) |
-| Ревьюер | [roles/reviewer.md](roles/reviewer.md) |
-| DevOps | [roles/devops.md](roles/devops.md) |
+| Тестировщик | [roles/tester.md](roles/tester.md)       |
+| Ревьюер     | [roles/reviewer.md](roles/reviewer.md)   |
+| DevOps      | [roles/devops.md](roles/devops.md)       |
 
 Перед созданием субагента передавай ему соответствующую ролевую инструкцию и необходимый контекст. Все агенты обязаны соблюдать AGENTS.md.
 

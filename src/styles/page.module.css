@@ -1,0 +1,64 @@
+.title {
+  font-size: 24px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.select {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 24px;
+}
+
+.weatherInfo {
+  text-align: center;
+  font-family: monospace;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.tab {
+  padding: 8px 16px;
+  border: none;
+  background: #5169e3;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.tab:hover {
+  background: #e0e0e0;
+}
+
+.active {
+  background: #007bff;
+  color: white;
+}
+
+.retryBlock {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.retryBtn {
+  padding: 8px 24px;
+  border: none;
+  background: #5169e3;
+  color: white;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-left: 8px;
+  font-size: 14px;
+}
+
+.retryBtn:hover {
+  background: #007bff;
+}

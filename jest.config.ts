@@ -5,7 +5,10 @@ const config: Config = {
   collectCoverage: true,
   coverageDirectory: 'coverage',
   moduleNameMapper: {
-    '\\.module\\.css$': 'identity-obj-proxy',
+    '^@/styles/(.*)$': '<rootDir>/src/styles/$1',
+    '^@/components/(.*)$': '<rootDir>/src/components/$1',
+    '^@/hooks/(.*)$': '<rootDir>/src/hooks/$1',
+    '^@/lib/(.*)$': '<rootDir>/src/lib/$1',
   },
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],

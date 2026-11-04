@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 
 // Mock CSS modules to return class names directly
-jest.mock('../app/styles.module.css', () => ({
+jest.mock('@/styles/page.module.css', () => ({
   tabs: 'tabs',
   tab: 'tab',
   active: 'active',
@@ -9,4 +9,14 @@ jest.mock('../app/styles.module.css', () => ({
   title: 'title',
   container: 'container',
   weatherInfo: 'weatherInfo',
+}));
+
+jest.mock('@/styles/base.module.css', () => ({
+  container: 'container',
+}));
+
+jest.mock('@/styles/Header.module.css', () => ({
+  header: 'header',
+  logo: 'logo',
+  title: 'title',
 }));
