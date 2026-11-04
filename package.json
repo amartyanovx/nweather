@@ -30,8 +30,6 @@
     "@types/jest": "^29.5.2",
     "@types/react": "19.3.0",
     "babel-jest": "^30.5.2",
-    "eslint-config-next": "16.4.3",
-    "eslint-config-prettier": "^10.1.8",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^30.5.2",
     "jest-environment-jsdom": "^30.5.2",
