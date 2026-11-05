@@ -16,6 +16,8 @@ next-env.d.ts
 
 # Test coverage reports
 coverage/
+stryker-output/
+reports/
 .nyc_output/
 
 # Lock files (optional - uncomment if needed)
