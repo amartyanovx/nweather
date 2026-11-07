@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
+    "typecheck": "tsc --noEmit",
     "test": "jest",
     "e2e": "playwright test",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,css,md}\"",
