@@ -17,10 +17,10 @@
 - [x] Drizzle ORM: схема `lib/schema.ts`, подключение `lib/db.ts`
 - [x] Seed-скрипт `lib/seed.ts` — загрузка городов из mock в БД
 
-- [ ] Unit-тесты для API route и хуков (папка `__tests__/api/`)
+- [x] Unit-тесты для API route и хуков (папка `__tests__/api/`)
 - [ ] Расширение E2E тестов для покрытия всех сценариев
 - [ ] Suspense boundaries для оптимизации стриминга
-- [ ] Обработка edge cases: пустой ответ, timeout, network error
+- [x] Обработка edge cases: пустой ответ БД, timeout (AbortController), network error, невалидный JSON, 404/500 в API route
 - [ ] Интеграция с реальным Weather API (замена mock данных)
 - [x] Интеграция SQLite + Drizzle ORM — база данных создана, seed выполнен
 - [ ] Замена API route на запросы к БД через Drizzle (шаг 5, пока отложен)
