@@ -6,7 +6,8 @@
 page.tsx (client)
 ├── useCities()            → lib/fetcher.ts → GET /api/weather
 ├── useCityWeeklyWeather() → lib/fetcher.ts → GET /api/weather?city=
-└── WeatherTabs.tsx
+├── WeatherTabs.tsx
+└── LoadingSkeleton.tsx    (skeleton-заглушки загрузки)
 app/api/weather/route.ts → lib/db.ts → lib/schema.ts → dev.db
 app/layout.tsx → components/BaseContainer.tsx → components/Header.tsx
 ```
@@ -21,17 +22,24 @@ app/layout.tsx → components/BaseContainer.tsx → components/Header.tsx
 
 ### 2. Server Components по умолчанию
 
-Server: `layout.tsx`, `BaseContainer.tsx`, API route. Клиентские острова (`'use client'`): `page.tsx` (состояние
-города и дня), `WeatherTabs.tsx` (обработчики `onClick`), `Header.tsx` (логотип через `next/image`). У `Header`
-директива избыточна — `next/image` работает и на сервере; кандидат на упрощение, см. `progress.md`.
+Server: `layout.tsx`, `BaseContainer.tsx`, `Header.tsx`, API route. Клиентские острова (`'use client'`): `page.tsx`
+(состояние города и дня), `WeatherTabs.tsx` (обработчики `onClick`).
 
-### 3. Данные из SQLite через Drizzle
+### 3. Skeleton вместо текста загрузки
+
+`components/LoadingSkeleton.tsx` имеет `variant: 'cities' | 'weather'` и директивы `'use client'` не требует: это
+чистая презентационная разметка внутри клиентского `page.tsx`. Заглушка держит геометрию будущего контента — пустой
+блок под `<select>`, семь табов и пять строк карточки. Текст не выводится, состояние объявляется `role="status"` +
+`aria-label`; анимация — `page.module.css` с отключением по `prefers-reduced-motion`. Suspense не используется: оба
+запроса клиентские (SWR).
+
+### 4. Данные из SQLite через Drizzle
 
 Один экземпляр `better-sqlite3` + `drizzle` в `src/lib/db.ts` (singleton на процесс) и `CREATE TABLE IF NOT EXISTS`
 при импорте. Поля и типы — `src/lib/schema.ts`. Инварианты, которые держит код: `day_of_week` 0–6 (0 = Пн), 7 записей
 на город, порядок дней берётся из `DAYS_OF_WEEK`, а не из БД.
 
-### 4. Компонентная архитектура
+### 5. Компонентная архитектура
 
 Один компонент — один файл; пропсы — локальный `interface Props` в файле компонента; стили — CSS Modules из
 `src/styles/`; импорты только через alias `@/*`.

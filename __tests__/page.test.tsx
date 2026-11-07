@@ -97,12 +97,41 @@ describe('Home page', () => {
     expect(screen.queryByRole('combobox')).toBeNull();
   });
 
-  test('does not render the dropdown while cities are still loading', () => {
+  test('renders a select-shaped skeleton instead of the dropdown while cities are loading', () => {
     mockUseCities.mockReturnValue(citiesResponse({ isLoading: true }));
 
     renderPage();
 
     expect(screen.queryByRole('combobox')).toBeNull();
+    expect(screen.getByRole('status', { name: 'Загрузка списка городов' })).toHaveClass(
+      'skeletonSelect',
+    );
+  });
+
+  test('does not render the cities skeleton once the city list is loaded', () => {
+    renderPage();
+
+    expect(screen.queryByRole('status', { name: 'Загрузка списка городов' })).toBeNull();
+  });
+
+  test('does not render the dropdown when the cities request has neither data nor error', () => {
+    mockUseCities.mockReturnValue(citiesResponse());
+
+    renderPage();
+
+    // Без данных список городов не подменяется: ни select, ни заглушки загрузки.
+    expect(screen.queryByRole('combobox')).toBeNull();
+    expect(screen.queryByRole('status', { name: 'Загрузка списка городов' })).toBeNull();
+  });
+
+  test('prefers the cities skeleton over the dropdown while a request is in flight', () => {
+    mockUseCities.mockReturnValue(citiesResponse({ data: { cities: CITIES }, isLoading: true }));
+
+    renderPage();
+
+    // Пока идёт запрос, даже закэшированные города не открывают select: место держит заглушка.
+    expect(screen.queryByRole('combobox')).toBeNull();
+    expect(screen.getByRole('status', { name: 'Загрузка списка городов' })).toBeInTheDocument();
   });
 
   test('shows the cities error message and hides the weather error', () => {
@@ -155,15 +184,30 @@ describe('Home page', () => {
     expect(dropdown()).toHaveValue('');
   });
 
-  test('shows the loading indicator only when a city is selected', () => {
+  test('shows the forecast skeleton only when a city is selected', () => {
     mockUseCityWeeklyWeather.mockReturnValue(weeklyResponse({ isLoading: true }));
 
     renderPage();
+    expect(screen.queryByRole('status', { name: 'Загрузка прогноза' })).toBeNull();
     expect(screen.queryByText('Загрузка...')).toBeNull();
 
     fireEvent.change(dropdown(), { target: { value: CITIES[1] } });
 
-    expect(screen.getByText('Загрузка...')).toBeInTheDocument();
+    const skeleton = screen.getByRole('status', { name: 'Загрузка прогноза' });
+    expect(skeleton).toHaveClass('skeletonWeather');
+    // Семь табов дней и пять строк карточки — та же геометрия, что у загруженного прогноза.
+    expect(skeleton.querySelectorAll('.skeletonTab')).toHaveLength(7);
+    expect(skeleton.querySelectorAll('.skeletonLine')).toHaveLength(5);
+  });
+
+  test('hides the forecast skeleton when the weekly data arrives', () => {
+    mockUseCityWeeklyWeather.mockReturnValue(weeklyResponse({ data: WEEK }));
+
+    renderPage();
+    fireEvent.change(dropdown(), { target: { value: CITIES[1] } });
+
+    expect(screen.queryByRole('status', { name: 'Загрузка прогноза' })).toBeNull();
+    expect(screen.getByText(`Город: ${CITIES[1]}`)).toBeInTheDocument();
   });
 
   test('renders weather details of the selected day', () => {

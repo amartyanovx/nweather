@@ -4,7 +4,8 @@
 
 - Каркас Next.js 16 App Router, TypeScript strict, CSS Modules, alias `@/*`.
 - `GET /api/weather` читает `cities` и `daily_weather` из `dev.db` через Drizzle; 404/500 обработаны.
-- UI: select городов, недельные табы, карточка дня, состояния загрузки и ошибки с повтором.
+- UI: select городов, недельные табы, карточка дня, skeleton-загрузка (`components/LoadingSkeleton.tsx`),
+  ошибки с повтором.
 - Unit-тесты — `__tests__/**` и `tests/WeatherTabs.test.tsx`; пороги покрытия — `jest.config.ts`.
 - E2E: один сценарий выбора города — `tests/weather.spec.ts`.
 - Не сделано: расширение E2E, Suspense boundaries, реальный Weather API вместо mock-данных.
@@ -23,5 +24,5 @@
    не работают; наполненная `dev.db` (7 городов, 49 записей) существует только как локальный файл.
 2. `node seed.js` удаляет `dev.db` до чтения mock-файла: один запуск безвозвратно уничтожает данные.
 3. `src/lib/seed.ts` не тестируется и не мутируется: `seed()` на уровне модуля, `Math.random`, `fs`, запись в `dev.db`.
-4. `Header.tsx` помечен `'use client'` без необходимости — кандидат на перевод в Server Component.
-5. Нет skeleton-загрузки: select не отрисован, пока города грузятся; индикатор прогноза — текст «Загрузка...».
+4. Превышен общий бюджет Memory Bank: `memory-bank/*.md` — ~19 000 символов при лимите 15 000 из `index.md`; сокращение
+   дублей вынесено в отдельную задачу, лимит не менялся.

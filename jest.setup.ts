@@ -36,6 +36,12 @@ jest.mock('@/styles/page.module.css', () => ({
   title: 'title',
   container: 'container',
   weatherInfo: 'weatherInfo',
+  skeletonSelect: 'skeletonSelect',
+  skeletonWeather: 'skeletonWeather',
+  skeletonTabs: 'skeletonTabs',
+  skeletonTab: 'skeletonTab',
+  skeletonCard: 'skeletonCard',
+  skeletonLine: 'skeletonLine',
 }));
 
 jest.mock('@/styles/base.module.css', () => ({
