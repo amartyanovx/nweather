@@ -1,5 +1,5 @@
 /**
- * @jest-environment node
+ * @jest-environment @stryker-mutator/jest-runner/jest-env/node
  */
 jest.mock('@/lib/db', () => ({ db: { select: jest.fn() } }));
 
@@ -134,7 +134,10 @@ describe('GET /api/weather', () => {
 
     expect(response.status).toBe(500);
     expect(await response.text()).toBe('Internal Server Error');
-    expect(consoleErrorSpy).toHaveBeenCalled();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Failed to fetch weather data from DB',
+      expect.any(Error),
+    );
   });
 
   test('returns 500 when city weather query fails', async () => {
@@ -146,6 +149,9 @@ describe('GET /api/weather', () => {
 
     expect(response.status).toBe(500);
     expect(await response.text()).toBe('Internal Server Error');
-    expect(consoleErrorSpy).toHaveBeenCalled();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Failed to fetch weather data from DB',
+      expect.any(Error),
+    );
   });
 });

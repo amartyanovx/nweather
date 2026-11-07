@@ -2,37 +2,34 @@
 
 ## Текущий фокус
 
-Покрытие проекта unit-тестами доведено до целевого уровня 85% и выше.
-Фактическое покрытие (Jest): statements 97.91%, branches 100%, functions 92.85%, lines 97.67%.
+Юнит-тесты и мутационное тестирование доведены до целевого уровня.
+Jest: 56 тестов, 10 сьютов, statements 98.48% / branches 100% / functions 95.23% / lines 98.36%.
+Stryker: 98.47% mutation score (127 killed + 2 timeout + 2 эквивалентных survived), `npm run mutate` зелёный.
 
-Тестами покрыты: API route `/api/weather` (200/404/500, пустые ответы БД), `jsonFetcher`
-(успех, ошибки статусов, timeout через AbortController, невалидный JSON, пустой/null ответ),
-хуки `useCities` и `useCityWeeklyWeather`, компоненты `Header`, `BaseContainer`, `WeatherTabs`.
+Тестами покрыты: API route `/api/weather`, `jsonFetcher`, хуки `useCities`/`useCityWeeklyWeather`,
+компоненты `Header`/`BaseContainer`/`WeatherTabs`, главная страница `page.tsx` (город, день недели,
+загрузка, ошибки, retry через `mutate`) и `layout.tsx` (metadata, `<html lang>`, children в BaseContainer).
 
-Мутационное тестирование StrykerJS настроено (`.stryker.config.js`), скрипты: `npm run mutate`, `npm run stryker-ci`.
+По файлам mutation score: все модули 100%, кроме `page.tsx` — 96.30% (2 эквивалентных мутанта).
 
 ## Недавние изменения
 
-- Добавлена папка `__tests__/api/` с тестами API route (обработка ошибок БД и краевые случаи)
-- Расширены тесты `jsonFetcher`: timeout, abort-ветки, ошибка парсинга JSON
-- Добавлены edge-case тесты хуков: пустая строка/null как ключ SWR, кодирование названия города
-- Удалён нерабочий polyfill `node-fetch` из `jest.setup.ts` (Node 26 даёт `Request`/`Response` глобально)
+- P2: новый `__tests__/page.test.tsx` (15 тестов): моки `@/hooks/useWeather`, `@/hooks/useCityWeeklyWeather`
+  и `swr.mutate`, фиксированная дата через `jest.useFakeTimers()` + `jest.setSystemTime` (4 ноября 2026 → индекс 2)
+- P3: новый `__tests__/layout.test.tsx` (3 теста); layout рендерится через `renderToStaticMarkup`,
+  т.к. React DOM не вставляет `<html>`/`<body>` в тестовый контейнер; `@/app/globals.css` замокан
+- В devDependencies добавлен `@types/react-dom` (типизация `react-dom/server`)
+- P1/P4 (ранее): добиты мутанты `clearTimeout`, guard `!controller.signal.aborted`, текст `console.error`,
+  className табов; конфиг Stryker переведён на `coverageAnalysis: 'perTest'` с `thresholds` и `mutate`-исключениями
 
 ## Следующие шаги (возможные)
 
-- Расширить E2E-тесты пользовательских сценариев
-- Оптимизация производительности через Suspense boundary
-- Добавление реального Weather API вместо mock данных
+- Рефакторинг `seed.ts` (вызов на уровне модуля, `Math.random`, `fs`, `dev.db`) и включение его в `mutate`
+- Расширить E2E-тесты (Playwright), Suspense boundaries, реальный Weather API вместо mock данных
 
 ## Важные паттерны и предпочтения
 
-- **Client Components**: используются только для интерактивности (`use client` в `page.tsx` и `WeatherTabs.tsx`)
-- **SWR кэширование**: данные кэшируются автоматически, повторные запросы не отправляются
-- **Path Alias**: `@/*` → `./*` для импортов
-- **CSS Modules**: стили изолированы через модули (styles.module.css)
-
-## Инсайты проекта
-
-- Mock данные генерируют недельный прогноз на основе базовых значений города (+idx для температуры, -idx для осадков)
-- `useCityWeeklyWeather` дублирует логику из API route — возможно стоит унифицировать
-- BaseContainer сейчас пустой обёртка (return <>{children}</>)
+- **Client Components**: только `page.tsx` и `WeatherTabs.tsx` (`'use client'`)
+- **Path Alias**: `@/*` → `./src/*`; в тестах моки модулей — по алиасу (`jest.mock('@/hooks/useWeather')`)
+- **CSS Modules**: замоканы в `jest.setup.ts` (`tab`, `active`, `container`, ...), поэтому классы проверяются буквально
+- **Stryker perTest**: требует mixin-окружений `@stryker-mutator/jest-runner/jest-env/{jsdom,node}` в jest.config/docblock

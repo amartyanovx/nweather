@@ -41,6 +41,16 @@ describe('jsonFetcher', () => {
     });
   });
 
+  test('clears the timeout timer after a successful request', async () => {
+    jest.useFakeTimers();
+    mockFetch.mockResolvedValueOnce(jsonResponse({ ok: true }));
+
+    await expect(jsonFetcher(FETCH_URL)).resolves.toEqual({ ok: true });
+
+    // Таймер timeout-а должен быть снят, иначе он останется висеть после ответа.
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
   test('throws error when response is not ok', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 404 } as Response);
 
@@ -57,6 +67,13 @@ describe('jsonFetcher', () => {
     mockFetch.mockRejectedValueOnce(new Error('Network failed'));
 
     await expect(jsonFetcher(FETCH_URL)).rejects.toThrow('Network failed');
+  });
+
+  test('rethrows non-aborted error even when its message mentions "aborted"', async () => {
+    // Сигнал не прерывался, поэтому текст ошибки нельзя подменять на timeout-сообщение.
+    mockFetch.mockRejectedValueOnce(new Error('Request aborted by user'));
+
+    await expect(jsonFetcher(FETCH_URL)).rejects.toThrow('Request aborted by user');
   });
 
   test('returns empty object when server returns empty JSON body', async () => {

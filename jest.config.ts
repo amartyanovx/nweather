@@ -19,7 +19,9 @@ const config: Config = {
     '^@/lib/(.*)$': '<rootDir>/src/lib/$1',
     '^@/app/(.*)$': '<rootDir>/src/app/$1',
   },
-  testEnvironment: 'jsdom',
+  // Stryker mixin-окружения нужны для coverageAnalysis: 'perTest';
+  // в обычном прогоне jest они ведут себя как стандартные jsdom/node.
+  testEnvironment: '@stryker-mutator/jest-runner/jest-env/jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   testMatch: ['**/*.test.[jt]s?(x)'],
   transform: {
