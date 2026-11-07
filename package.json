@@ -11,7 +11,9 @@
     "test": "jest",
     "e2e": "playwright test",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,css,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,css,md}\""
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,css,md}\"",
+    "mutate": "stryker run",
+    "stryker-ci": "stryker run --reporters=html,clear-text"
   },
   "dependencies": {
     "@babel/preset-typescript": "^7.23.2",
@@ -27,6 +29,9 @@
     "@babel/preset-env": "^7.23.2",
     "@babel/preset-react": "^7.29.7",
     "@playwright/test": "^1.45.2",
+    "@stryker-mutator/core": "^10.1.1",
+    "@stryker-mutator/jest-runner": "^10.1.1",
+    "@stryker-mutator/typescript-checker": "^10.1.1",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@types/better-sqlite3": "^9.6.0",
