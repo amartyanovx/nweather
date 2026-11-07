@@ -18,6 +18,8 @@
 - [x] Seed-скрипт `lib/seed.ts` — загрузка городов из mock в БД
 
 - [x] Unit-тесты для API route и хуков (папка `__tests__/api/`)
+- [x] Unit-тесты главной страницы и layout: `__tests__/page.test.tsx`, `__tests__/layout.test.tsx`
+- [x] Мутационное тестирование StrykerJS: score 98.47% (мутируются все прикладные модули, кроме db/schema/seed)
 - [ ] Расширение E2E тестов для покрытия всех сценариев
 - [ ] Suspense boundaries для оптимизации стриминга
 - [x] Обработка edge cases: пустой ответ БД, timeout (AbortController), network error, невалидный JSON, 404/500 в API route
@@ -27,7 +29,24 @@
 - [x] Обновление схемы БД: добавлена таблица `daily_weather` для хранения данных о погоде на неделю
 - [x] Обновлён API route `/api/weather?city=` — теперь возвращает реальные данные из таблицы `daily_weather`
 - [x] Обновлён хук `useCityWeeklyWeather.ts` — убирает дублирование логики генерации дней недели
-- [x] Добавлен StrykerJS для мутационного тестирования. Конфигурация находится в `.stryker.conf.ts`. Скрипты: `npm run mutate`, `npm run stryker-ci`
+- [x] Добавлен StrykerJS для мутационного тестирования. Конфигурация находится в `.stryker.config.js`. Скрипты: `npm run mutate`, `npm run stryker-ci`
+
+## Мутационное тестирование (актуальное состояние)
+
+- Конфиг `.stryker.config.js`: `coverageAnalysis: 'perTest'`, `mutate: ['src/**/*.{ts,tsx}', '!src/lib/{db,schema,seed}.ts']`,
+  `disableTypeChecks: 'src/**/*.{ts,tsx}'`, `ignorePatterns: ['coverage','reports','test-results','.next','.stryker-tmp']`,
+  `timeoutMS: 10000`, `thresholds: { high: 90, low: 80, break: 75 }`
+- `perTest` требует mixin-окружений Stryker: `jest.config.ts` → `testEnvironment: '@stryker-mutator/jest-runner/jest-env/jsdom'`,
+  `__tests__/api/route.test.ts` → docblock `@jest-environment @stryker-mutator/jest-runner/jest-env/node`
+- Итоговый прогон `npx stryker run`: **98.47%** (127 killed + 2 timeout + 2 survived), exit code 0.
+  По файлам: route.ts 100%, fetcher.ts 100%, WeatherTabs.tsx 100%, хуки 100%, Header.tsx 100%,
+  BaseContainer.tsx 100%, layout.tsx 100%, page.tsx 96.30%
+- Два выживших мутанта в `page.tsx` эквивалентны поведению и не убиваются наблюдением:
+  `useEffect(..., [])` → `['Stryker was here']` (сравнение deps поэлементное) и `value={selectedCity ?? ''}`
+  → `'Stryker was here!'` (в `<select>` без совпадающей опции `value` всё равно `''`)
+- Непокрытые ранее `page.tsx` и `layout.tsx` закрыты тестами `__tests__/page.test.tsx` (15 тестов) и
+  `__tests__/layout.test.tsx` (3 теста); layout проверяется через `renderToStaticMarkup`, т.к. React DOM
+  не рендерит `<html>`/`<body>` внутрь тестового контейнера
 
 Проект находится на начальной стадии. Основная функциональность реализована и работает, но требует расширения покрытия тестами.
 
@@ -35,6 +54,8 @@
 
 1. **BaseContainer пустой**: сейчас только обёртка `<>{children}</>`, возможно стоит добавить реальный контейнер с CSS классами
 2. **Нет обработки loading состояния**: при первом рендере select пустой, нет skeleton loader
+3. **`seed.ts` не покрыт и не мутируется**: `seed()` вызывается на уровне модуля, используются `Math.random`, `fs`, `dev.db` — нужен рефакторинг перед тестированием
+4. **`@types/react-dom` добавлен в devDependencies**: нужен для типизации `react-dom/server` в тесте layout
 
 ## Эволюция проектных решений
 

@@ -14,11 +14,41 @@ describe('WeatherTabs component', () => {
     });
 
     // The first button should have active class
-    const firstButton = screen.getAllByRole('button')[0];
-    expect(firstButton).toHaveAttribute('class', 'tab active');
+    const buttons = screen.getAllByRole('button');
+    expect(buttons).toHaveLength(days.length);
+    expect(buttons[0]).toHaveAttribute('class', 'tab active');
 
     // Click the second tab
     fireEvent.click(screen.getByText(days[1]));
     expect(onSelect).toHaveBeenCalledWith(1);
+  });
+
+  test('marks exactly one tab as active', () => {
+    render(<WeatherTabs days={days} selectedIndex={1} onSelect={jest.fn()} />);
+
+    const buttons = screen.getAllByRole('button');
+    expect(buttons.filter((button) => button.classList.contains('active'))).toHaveLength(1);
+    expect(buttons[1]).toHaveClass('active');
+    expect(buttons[0]).not.toHaveClass('active');
+    expect(buttons[2]).not.toHaveClass('active');
+  });
+
+  test('gives inactive tabs the base class only', () => {
+    render(<WeatherTabs days={days} selectedIndex={0} onSelect={jest.fn()} />);
+
+    const buttons = screen.getAllByRole('button');
+    // CSS-модуль замокан в jest.setup.ts, поэтому класс неактивного таба — ровно `tab`.
+    expect(buttons[1].getAttribute('class')?.trim()).toBe('tab');
+    expect(buttons[2].getAttribute('class')?.trim()).toBe('tab');
+  });
+
+  test('renders no active tab when selectedIndex is out of range', () => {
+    render(<WeatherTabs days={days} selectedIndex={5} onSelect={jest.fn()} />);
+
+    const buttons = screen.getAllByRole('button');
+    buttons.forEach((button) => {
+      expect(button).not.toHaveClass('active');
+      expect(button.getAttribute('class')?.trim()).toBe('tab');
+    });
   });
 });
