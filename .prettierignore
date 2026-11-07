@@ -27,3 +27,6 @@ reports/
 # Other generated/static files
 *.min.js
 *.min.css
+
+# локальный чекпоинт сессии (вне git)
+memory-bank/local/

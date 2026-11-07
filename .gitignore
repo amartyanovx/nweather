@@ -48,3 +48,6 @@ next-env.d.ts
 
 # drizzle migrations
 /migrations/
+
+# локальный чекпоинт сессии — вне git
+/memory-bank/local/
