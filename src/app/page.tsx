@@ -5,9 +5,10 @@ import styles from '@/styles/page.module.css';
 import { useCities } from '@/hooks/useWeather';
 import { useCityWeeklyWeather } from '@/hooks/useCityWeeklyWeather';
 import WeatherTabs from '@/components/WeatherTabs';
+import LoadingSkeleton from '@/components/LoadingSkeleton';
 
 export default function Home() {
-  const { data: citiesData, error: cityError } = useCities();
+  const { data: citiesData, error: cityError, isLoading: citiesLoading } = useCities();
   const cityNames = citiesData?.cities ?? [];
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
@@ -36,7 +37,8 @@ export default function Home() {
   return (
     <>
       {cityError && <p>Не удалось загрузить города.</p>}
-      {Array.isArray(cityNames) && cityNames.length > 0 && (
+      {citiesLoading && <LoadingSkeleton variant="cities" />}
+      {!citiesLoading && Array.isArray(cityNames) && cityNames.length > 0 && (
         <select className={styles.select} value={selectedCity ?? ''} onChange={handleChange}>
           <option value="">Выберите город</option>
           {cityNames.map((c) => (
@@ -46,7 +48,7 @@ export default function Home() {
           ))}
         </select>
       )}
-      {weatherLoading && selectedCity !== null && <p>Загрузка...</p>}
+      {weatherLoading && selectedCity !== null && <LoadingSkeleton variant="weather" />}
       {weatherErr && (
         <p className={styles.retryBlock}>
           Не удалось загрузить погоду.{' '}
