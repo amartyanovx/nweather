@@ -1,124 +1,49 @@
 # System Patterns: nweather
 
-## Архитектура системы
+## Поток данных
 
 ```
-nweather/
-├── src/
-│   ├── app/                          # Next.js App Router
-│   │   ├── api/weather/route.ts      # GET /api/weather
-│   │   │                             # без query → список городов
-│   │   │                             # ?city=Название → погода по городу
-│   │   ├── layout.tsx                # Корневой layout (Server Component)
-│   │   ├── page.tsx                  # Главная страница (Client Component)
-│   │   ├── globals.css               # Глобальные стили
-│   │   └── favicon.ico
-│   ├── components/                   # BaseContainer, Header, WeatherTabs
-│   ├── hooks/                        # useWeather.ts (useCities), useCityWeeklyWeather.ts — SWR
-│   ├── lib/                          # constants, db, fetcher, schema, seed
-│   ├── styles/                       # CSS Modules (*.module.css)
-│   └── types/                        # weather.ts — WeatherDay
-├── mocks/                            # Пусто: weatherMock.json удалён в 430242c, seed.ts на него всё ещё ссылается
-├── tests/                            # Playwright: weather.spec.ts
-│                                     # + WeatherTabs.test.tsx (подхватывает Jest)
-└── __tests__/                        # Jest: компоненты, хуки, lib, api/route.test.ts
+page.tsx (client)
+├── useCities()            → lib/fetcher.ts → GET /api/weather
+├── useCityWeeklyWeather() → lib/fetcher.ts → GET /api/weather?city=
+└── WeatherTabs.tsx
+app/api/weather/route.ts → lib/db.ts → lib/schema.ts → dev.db
+app/layout.tsx → components/BaseContainer.tsx → components/Header.tsx
 ```
 
-## Ключевые технические решения
+## Принятые решения
 
-### 1. Data Fetching паттерн (SWR + jsonFetcher)
+### 1. SWR + jsonFetcher
 
-- `jsonFetcher<T>(url)` — универсальная функция для fetch с типизацией
-- SWR хуки кэшируют данные автоматически, предотвращая повторные запросы
-- Conditional fetching: null ключ пропускает запрос
+`jsonFetcher<T>(url)` в `src/lib/fetcher.ts` — единственная точка fetch: `AbortController` с таймаутом, ошибка на
+`!res.ok`, отдельное сообщение для таймаута. Хуки SWR кэшируют ответы, ключ `null` отключает запрос (прогноз не
+грузится, пока город не выбран). React Query отклонили: нужен только кэш и ревалидация через `mutate`.
 
 ### 2. Server Components по умолчанию
 
-- `layout.tsx`, `BaseContainer.tsx` и API route — Server Components (без `'use client'`)
-- `page.tsx` — Client Component из-за `useState`/`useEffect`
-- `WeatherTabs.tsx` — Client Component из-за обработчиков `onClick`
-- `Header.tsx` — Client Component (использует `next/image`)
+Server: `layout.tsx`, `BaseContainer.tsx`, API route. Клиентские острова (`'use client'`): `page.tsx` (состояние
+города и дня), `WeatherTabs.tsx` (обработчики `onClick`), `Header.tsx` (логотип через `next/image`). У `Header`
+директива избыточна — `next/image` работает и на сервере; кандидат на упрощение, см. `progress.md`.
 
-### 3. Database Data Pattern (SQLite + Drizzle ORM)
+### 3. Данные из SQLite через Drizzle
 
-- Данные хранятся в `dev.db` (SQLite) через Drizzle ORM
-- API route выполняет SQL-запросы к таблицам `cities` и `daily_weather` через Drizzle
-- Недельный прогноз хранится в БД: 7 записей на каждый город (по одной на день недели)
-- Seed-скрипт `src/lib/seed.ts` загружает данные из `mocks/weatherMock.json` в БД; файл удалён в 430242c, поэтому seed
-  сейчас не работает — см. раздел «Работа с базой данных»
+Один экземпляр `better-sqlite3` + `drizzle` в `src/lib/db.ts` (singleton на процесс) и `CREATE TABLE IF NOT EXISTS`
+при импорте. Поля и типы — `src/lib/schema.ts`. Инварианты, которые держит код: `day_of_week` 0–6 (0 = Пн), 7 записей
+на город, порядок дней берётся из `DAYS_OF_WEEK`, а не из БД.
 
 ### 4. Компонентная архитектура
 
-- Один компонент = один файл
-- Типизированные пропсы — локальный `interface Props` в файле компонента (`WeatherTabs.tsx`)
-- CSS Modules для изоляции стилей
+Один компонент — один файл; пропсы — локальный `interface Props` в файле компонента; стили — CSS Modules из
+`src/styles/`; импорты только через alias `@/*`.
 
-## Связь компонентов
+## Особенности API route
 
-```
-layout.tsx (Server)
-    └── BaseContainer (Server) ── Header (Client)
-            └── page.tsx (Client)
-                    ├── useCities() → select dropdown
-                    ├── useCityWeeklyWeather(city) → weather data
-                    └── WeatherTabs (Client) → day switcher
-```
+Route собирает ответ из БД в массив фиксированной длины: идёт по `DAYS_OF_WEEK` и ищет строку по `day_of_week`,
+поэтому пропущенные дни остаются `undefined` и доходят до UI как `—`. Контракт и коды ошибок — `techContext.md`.
 
-## API Route Pattern
+## Работа с БД
 
-Контракты, коды ошибок и источники — в `techContext.md`, раздел «API Endpoints». Особенность: route собирает 7 дней из
-таблицы `daily_weather` в массив `WeatherDay[]` фиксированного порядка `DAYS_OF_WEEK` (`src/lib/constants.ts`);
-отсутствующие значения остаются `undefined`.
-
-## Зависимости между файлами
-
-```
-page.tsx
-├── hooks/useWeather.ts (useCities) → lib/fetcher.ts
-├── hooks/useCityWeeklyWeather.ts → lib/fetcher.ts
-├── components/WeatherTabs.tsx
-└── styles/page.module.css
-
-lib/fetcher.ts — jsonFetcher: fetch + AbortController, таймаут 10 с
-components/Header.tsx → components/BaseContainer.tsx → app/layout.tsx
-app/api/weather/route.ts → lib/db.ts → lib/schema.ts → dev.db
-lib/constants.ts (DAYS_OF_WEEK) → app/api/weather/route.ts
-```
-
-## Работа с базой данных
-
-### SQLite + Drizzle ORM
-
-- **База данных:** `dev.db` — локальный файл SQLite в корне проекта (вне git)
-- **Подключение:** `src/lib/db.ts` — singleton `better-sqlite3` + `drizzle`; при импорте выполняет
-  `CREATE TABLE IF NOT EXISTS` (побочный эффект модуля — учитывай в тестах)
-- **Схема:** `src/lib/schema.ts` — `cities` (`id`, `name`) и `daily_weather` (`id`, `city_id`, `day_of_week`,
-  `max_temp_c`, `min_temp_c`, `precipitation_mm`, `pressure_hpa`); в коде поля — camelCase через Drizzle
-- **Seed-скрипт:** `src/lib/seed.ts` — читает `mocks/weatherMock.json`; файл удалён в 430242c, поэтому seed сейчас
-  не запускается (БД уже наполнена: 7 городов, 49 записей `daily_weather`)
-- **Конфигурация:** `drizzle.config.ts` — настройки drizzle-kit для SQLite
-
-### Паттерн подключения к БД
-
-Один экземпляр `better-sqlite3` + `drizzle` в `src/lib/db.ts` (singleton на процесс) плюс `CREATE TABLE IF NOT EXISTS`
-при импорте. `src/lib/seed.ts` открывает собственное соединение напрямую через `better-sqlite3` и закрывает его в конце.
-Код в документации не дублируется — читай `src/lib/db.ts` и `src/lib/seed.ts`.
-
-### Таблица cities
-
-| Поле | Тип     | Описание              |
-| ---- | ------- | --------------------- |
-| id   | INTEGER | Первичный ключ (авто) |
-| name | TEXT    | Название города       |
-
-### Таблица daily_weather
-
-| Поле             | Тип     | Описание                        |
-| ---------------- | ------- | ------------------------------- |
-| id               | INTEGER | Первичный ключ (авто)           |
-| city_id          | INTEGER | FK → cities.id                  |
-| day_of_week      | INTEGER | 0=Понедельник ... 6=Воскресенье |
-| max_temp_c       | REAL    | Максимальная температура        |
-| min_temp_c       | REAL    | Минимальная температура         |
-| precipitation_mm | REAL    | Осадки в мм                     |
-| pressure_hpa     | REAL    | Давление в гПа                  |
+- `dev.db` — локальный файл SQLite в корне проекта, вне git; удаление необратимо.
+- Seed существует в двух видах: `src/lib/seed.ts` (Drizzle, `seed()` вызывается на уровне модуля) и корневой
+  `seed.js` (чистый `better-sqlite3`). Состояние обоих и риски запуска — «Известные дефекты» в `progress.md`.
+- `drizzle.config.ts` — конфиг drizzle-kit для миграций и схемы.
