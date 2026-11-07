@@ -1,0 +1,8 @@
+# Единый EOL во всём репозитории: рабочие копии и блобы — LF, независимо от core.autocrlf.
+# Без этого `npm run format:check` (endOfLine: lf) краснел после каждого checkout на Windows.
+* text=auto eol=lf
+
+# Бинарные файлы не трогаем.
+*.db binary
+*.ico binary
+*.png binary
