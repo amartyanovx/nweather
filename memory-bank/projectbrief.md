@@ -20,8 +20,8 @@
 ## Инварианты
 
 - Строгая типизация без `any`; Server Components по умолчанию.
-- `ForecastDay` (`src/types/weather.ts`): `minTempC < maxTempC`, `precipitationMm ≥ 0`, `humidityPct` в `[0, 100]`,
-  `pressureHpa` в `[950, 1050]`, `windSpeedMs` в `[0, 25]`; осадки только у `rain`/`snow`/`thunderstorm`.
+- `ForecastDay` (`src/types/weather.ts`): `minTempC < maxTempC`, метрики всегда заполнены числами; осадки ненулевые
+  только у `rain`/`snow`/`thunderstorm`. Диапазоны значений задаёт `bell(...)` в `src/lib/weather/generator.ts`.
 - Отсутствующая метрика не подменяется нулём: в интерфейсе показывается `—`.
 
 ## Сценарий и UX-правила

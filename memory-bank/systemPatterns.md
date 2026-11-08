@@ -8,7 +8,7 @@ page.tsx (client island: выбор города и дня)
 ├── useCityForecast() → lib/fetcher.ts → GET /api/forecast?city=<slug>  (ключ null без города)
 └── CitySearch.tsx (client island) + WeatherTabs, WeatherCard, LoadingSkeleton
 
-Ввод → useDebouncedValue(200 мс) → searchCities (lib/cityQuery.ts); метки — lib/forecastFormat.ts; активный день — isToday
+Ввод → useDebouncedValue → searchCities (lib/cityQuery.ts); метки — lib/forecastFormat.ts; активный день — isToday
 
 /api/cities    → service.listCities   → db → cities
 /api/forecast  → service.getForecast  → кэш → generator; город и «сегодня» — db + dates
@@ -20,7 +20,7 @@ app/layout.tsx → components/BaseContainer.tsx → components/Header.tsx
 ### 1. SWR, Server Components, skeleton
 
 `jsonFetcher<T>` (`src/lib/fetcher.ts`) — единственная точка fetch; SWR-хуки кэшируют и повторяют запрос (`mutate`), ключ
-`null` отключает загрузку. Клиентские острова — `page.tsx`, `CitySearch.tsx`, `WeatherTabs.tsx`; загрузка — заглушки.
+`null` отключает загрузку. Клиентские острова — `page.tsx`, `CitySearch.tsx`, `ThemeToggle.tsx`, `WeatherTabs.tsx`.
 
 ### 2. Прогноз генерируется, а не хранится
 
@@ -29,19 +29,19 @@ app/layout.tsx → components/BaseContainer.tsx → components/Header.tsx
 
 ### 3. Кэш в памяти без TTL
 
-`cache.ts` — `lru-cache` на процесс, ключ `(slug, date)`, `resetWeatherCache()` для тестов. TTL отклонён: прогноз на
-календарную дату не устаревает; HMR в `next dev` может обнулять синглтон — это ожидаемо.
+`cache.ts` — `lru-cache` на процесс, ключ `(slug, date)`. TTL отклонён: прогноз на календарную дату не устаревает;
+HMR в `next dev` может обнулять синглтон — это ожидаемо.
 
 ### 4. Сервис — единственная точка сборки прогноза
 
-`service.ts` ищет город, считает «сегодня» и начало недели в TZ города и собирает дни по схеме «кэш → генератор → кэш».
-`isToday` пересчитывается при чтении — день не «залипает» на смене суток. Даты — `dates.ts`, ошибки — `errors.ts`.
+`service.ts` ищет город и собирает дни по схеме «кэш → генератор → кэш»; даты — `dates.ts` (UTC-полночь), ошибки —
+`errors.ts`. `isToday` пересчитывается при чтении — день не «залипает» на смене суток.
 
 ### 5. Поиск города на клиенте вместо `<select>`
 
 `<select>` заменён полем с подсказками: нужен поиск по русскому и английскому названию, нативный select его не даёт.
-`/api/cities` отдаётся один раз и фильтруется на клиенте (`searchCities`); ручка поиска отклонена. Дебаунс 200 мс нужен
-для стабильности списка, не для экономии запросов. Активный день — с сервера (`isToday`), даты — UTC-полночь.
+`/api/cities` отдаётся один раз и фильтруется на клиенте (`searchCities`); ручка поиска отклонена. Дебаунс нужен для
+стабильности списка, не для экономии запросов — параметры ввода — `projectbrief.md`.
 
 ### 6. Миграции вместо DDL при импорте
 
