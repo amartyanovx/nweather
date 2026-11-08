@@ -1,77 +1,74 @@
 'use client';
-import React, { useState, useEffect } from 'react';
-import { mutate } from 'swr';
-import styles from '@/styles/page.module.css';
-import { useCities } from '@/hooks/useWeather';
-import { useCityWeeklyWeather } from '@/hooks/useCityWeeklyWeather';
-import WeatherTabs from '@/components/WeatherTabs';
+
+import { useState } from 'react';
+import CitySearch from '@/components/CitySearch';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
+import WeatherCard from '@/components/WeatherCard';
+import WeatherTabs from '@/components/WeatherTabs';
+import { useCities } from '@/hooks/useCities';
+import { useCityForecast } from '@/hooks/useCityForecast';
+import styles from '@/styles/page.module.css';
+import type { CityDTO } from '@/types/weather';
 
 export default function Home() {
-  const { data: citiesData, error: cityError, isLoading: citiesLoading } = useCities();
-  const cityNames = citiesData?.cities ?? [];
-  const [selectedCity, setSelectedCity] = useState<string | null>(null);
-  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
-
-  useEffect(() => {
-    const d = new Date();
-    setSelectedDayIndex((d.getDay() + 6) % 7);
-  }, []);
-
-  const handleRetry = () => {
-    if (selectedCity) {
-      mutate(`/api/weather?city=${encodeURIComponent(selectedCity)}`);
-    }
-  };
+  const { data: citiesData, error: citiesError, isLoading: citiesLoading } = useCities();
+  const [selectedCity, setSelectedCity] = useState<CityDTO | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const {
-    data: weekly,
-    error: weatherErr,
-    isLoading: weatherLoading,
-  } = useCityWeeklyWeather(selectedCity);
+    data: forecast,
+    error: forecastError,
+    isLoading: forecastLoading,
+    mutate,
+  } = useCityForecast(selectedCity?.slug ?? null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedCity(e.target.value || null);
+  const cities = citiesData?.cities ?? [];
+  const days = forecast?.days ?? [];
+  // День берётся из ответа сервера: ревалидация SWR не сбрасывает выбор пользователя.
+  const activeDay =
+    days.find((day) => day.date === selectedDate) ?? days.find((day) => day.isToday) ?? days[0];
+  const activeIndex = activeDay ? days.indexOf(activeDay) : -1;
+
+  const handleSelect = (city: CityDTO) => {
+    setSelectedCity(city);
+    setSelectedDate(null);
+  };
+
+  const handleClear = () => {
+    setSelectedCity(null);
+    setSelectedDate(null);
+  };
+
+  const handleSelectDay = (index: number) => {
+    const day = days[index];
+    if (day) setSelectedDate(day.date);
   };
 
   return (
     <>
-      {cityError && <p>Не удалось загрузить города.</p>}
+      {citiesError && <p>Не удалось загрузить города.</p>}
       {citiesLoading && <LoadingSkeleton variant="cities" />}
-      {!citiesLoading && Array.isArray(cityNames) && cityNames.length > 0 && (
-        <select className={styles.select} value={selectedCity ?? ''} onChange={handleChange}>
-          <option value="">Выберите город</option>
-          {cityNames.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
+      {!citiesLoading && cities.length > 0 && (
+        <CitySearch
+          cities={cities}
+          selected={selectedCity}
+          onSelect={handleSelect}
+          onClear={handleClear}
+        />
       )}
-      {weatherLoading && selectedCity !== null && <LoadingSkeleton variant="weather" />}
-      {weatherErr && (
+      {forecastLoading && selectedCity !== null && <LoadingSkeleton variant="weather" />}
+      {forecastError && (
         <p className={styles.retryBlock}>
           Не удалось загрузить погоду.{' '}
-          <button type="button" className={styles.retryBtn} onClick={handleRetry}>
+          <button type="button" className={styles.retryBtn} onClick={() => void mutate()}>
             Повторить
           </button>
         </p>
       )}
-      {weekly && (
+      {selectedCity && activeDay && (
         <>
-          <WeatherTabs
-            days={weekly.map((d) => d.day)}
-            selectedIndex={selectedDayIndex}
-            onSelect={setSelectedDayIndex}
-          />
-          <div className={styles.weatherInfo}>
-            <h3>{weekly[selectedDayIndex].day}</h3>
-            <p>Город: {selectedCity}</p>
-            <p>Максимальная температура: {weekly[selectedDayIndex].maxTempC ?? '—'}°C</p>
-            <p>Минимальная температура: {weekly[selectedDayIndex].minTempC ?? '—'}°C</p>
-            <p>Осадки: {weekly[selectedDayIndex].precipitationMm ?? '—'} мм</p>
-            <p>Давление: {weekly[selectedDayIndex].pressureHpa ?? '—'} гПа</p>
-          </div>
+          <WeatherTabs days={days} selectedIndex={activeIndex} onSelect={handleSelectDay} />
+          <WeatherCard cityName={selectedCity.name} day={activeDay} />
         </>
       )}
     </>

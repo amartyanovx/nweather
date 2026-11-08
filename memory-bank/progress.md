@@ -1,27 +1,31 @@
 # Progress: nweather
 
+[16:56][08-11-26] Фронтенд переписан по `frontend-plan.md`.
+
 ## Состояние
 
 - Каркас Next.js App Router, TypeScript strict, CSS Modules, alias `@/*`.
-- `GET /api/weather` читает `cities` и `daily_weather` из `dev.db` через Drizzle; 404/500 обработаны.
-- UI: select городов, недельные табы, карточка дня, skeleton-загрузка (`components/LoadingSkeleton.tsx`),
-  ошибки с повтором.
-- Unit-тесты — `__tests__/**` и `tests/WeatherTabs.test.tsx`; пороги покрытия — `jest.config.ts`.
-- E2E: один сценарий выбора города — `tests/weather.spec.ts`.
-- Не сделано: расширение E2E, Suspense boundaries, реальный Weather API вместо mock-данных.
-- Memory Bank в бюджете: 13 239 символов при лимите 15 000 (`wc -m memory-bank/*.md`); бюджет и правила — `index.md`.
+- БД: одна таблица `cities` — 100 городов из `src/data/cities.json`; миграции — `./drizzle`, сид — `scripts/seed.ts`.
+- API: `/api/cities` и `/api/forecast`; deprecated `/api/weather` и его хуки удалены вместе с тестами.
+- Прогноз генерируется по запросу и кэшируется в памяти — `src/lib/weather/`.
+- UI: поле «Город» с подсказками, табы и карточка только после выбора, слайдер темы в хедере; поиск —
+  `src/lib/cityQuery.ts`, формат — `src/lib/forecastFormat.ts`, хуки — `src/hooks/`.
+- Unit-тесты — `__tests__/**` и `tests/WeatherTabs.test.tsx`; E2E — `tests/weather.spec.ts` (поиск и выбор города) и
+  `tests/forecast-api.spec.ts` (контракт API).
+- Дефекты 1–3 закрыты: сид и миграции идемпотентны, `db.ts` при импорте ничего не создаёт.
+- Memory Bank в бюджете; правила ведения — `index.md`.
 
 ## Тесты и мутации
 
-- `npm run mutate` мутирует прикладной код; что исключено и с какими порогами — `.stryker.config.js`.
-- Два выживших мутанта в `src/app/page.tsx` эквивалентны и не убиваются наблюдением: замена зависимостей
-  `useEffect(..., [])` (сравнение массива поэлементное) и `value={selectedCity ?? ''}` (в `<select>` без совпадающей
-  опции значение всё равно `''`).
-- Ловушка `testMatch`: `tests/*.test.tsx` подхватывает Jest, а не Playwright — см. `techContext.md`.
+- `npm run mutate` мутирует прикладной код; исключения и пороги — `.stryker.config.js`.
+- `cityQuery.ts` — 98,15%, `forecastFormat.ts` — 100%; эквивалентный мутант один: квантор `+` в `WORD_SEPARATORS`
+  ничего не меняет, потому что `splitWords` отбрасывает пустые строки.
+- Эквивалентные мутанты в `generator.ts`: `<` → `<=` в границах весов и сравнении с нулём — различия недостижимы.
+- Мутанты пустых наборов колонок в `service.ts` не ловятся: мок БД не читает аргументы `select`, форму ответа проверяет
+  E2E.
 
-## Известные дефекты
+## Известные дефекты и ограничения
 
-1. `mocks/weatherMock.json` удалён в коммите 430242c, но `src/lib/seed.ts` и `seed.js` его читают — оба seed-скрипта
-   не работают; наполненная `dev.db` (7 городов, 49 записей) существует только как локальный файл.
-2. `node seed.js` удаляет `dev.db` до чтения mock-файла: один запуск безвозвратно уничтожает данные.
-3. `src/lib/seed.ts` не тестируется и не мутируется: `seed()` на уровне модуля, `Math.random`, `fs`, запись в `dev.db`.
+1. Прогноз не детерминирован: день стабилен только внутри процесса (кэш), после рестарта значения другие
+   (`systemPatterns.md`).
+2. Дебаунс 200 мс не экономит запросы: `/api/cities` запрашивается один раз, задержка нужна для стабильности списка.

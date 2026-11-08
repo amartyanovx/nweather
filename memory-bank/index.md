@@ -32,7 +32,7 @@
 | Факт                                     | Где смотреть                                                                      |
 | :--------------------------------------- | :-------------------------------------------------------------------------------- |
 | Версии, скрипты, пороги, globs, таймауты | `package.json`, `jest.config.ts`, `.stryker.config.js`, `playwright.config.ts`    |
-| Схема БД, подключение, seed              | `src/lib/schema.ts`, `src/lib/db.ts`, `src/lib/seed.ts`                           |
+| Схема БД, подключение, seed              | `src/lib/schema.ts`, `src/lib/db.ts`, `scripts/seed.ts`                           |
 | Состав файлов, покрытие, оценка мутантов | `src/`, `__tests__/`, `tests/`; вывод `npm test`, `npm run mutate`, `npm run e2e` |
 | Правила кода, команды, лимиты, формат    | `AGENTS.md`                                                                       |
 

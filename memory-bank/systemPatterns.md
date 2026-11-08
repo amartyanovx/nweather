@@ -3,54 +3,58 @@
 ## Поток данных
 
 ```
-page.tsx (client)
-├── useCities()            → lib/fetcher.ts → GET /api/weather
-├── useCityWeeklyWeather() → lib/fetcher.ts → GET /api/weather?city=
-├── WeatherTabs.tsx
-└── LoadingSkeleton.tsx    (skeleton-заглушки загрузки)
-app/api/weather/route.ts → lib/db.ts → lib/schema.ts → dev.db
+page.tsx (client island: выбор города и дня)
+├── useCities()       → lib/fetcher.ts → GET /api/cities
+├── useCityForecast() → lib/fetcher.ts → GET /api/forecast?city=<slug>  (ключ null без города)
+└── CitySearch.tsx (client island) + WeatherTabs, WeatherCard, LoadingSkeleton
+
+Ввод → useDebouncedValue(200 мс) → searchCities (lib/cityQuery.ts); метки — lib/forecastFormat.ts; активный день — isToday
+
+/api/cities    → service.listCities   → db → cities
+/api/forecast  → service.getForecast  → кэш → generator; город и «сегодня» — db + dates
 app/layout.tsx → components/BaseContainer.tsx → components/Header.tsx
 ```
 
 ## Принятые решения
 
-### 1. SWR + jsonFetcher
+### 1. SWR, Server Components, skeleton
 
-`jsonFetcher<T>(url)` в `src/lib/fetcher.ts` — единственная точка fetch (таймаут и сообщения об ошибках — там же). Хуки
-SWR кэшируют ответы, ключ `null` отключает запрос (прогноз не грузится, пока город не выбран). React Query отклонили:
-нужен только кэш и ревалидация через `mutate`.
+`jsonFetcher<T>` (`src/lib/fetcher.ts`) — единственная точка fetch; SWR-хуки кэшируют и повторяют запрос (`mutate`), ключ
+`null` отключает загрузку. Клиентские острова — `page.tsx`, `CitySearch.tsx`, `WeatherTabs.tsx`; загрузка — заглушки.
 
-### 2. Server Components по умолчанию
+### 2. Прогноз генерируется, а не хранится
 
-Server: `layout.tsx`, `BaseContainer.tsx`, `Header.tsx`, API route. Клиентские острова (`'use client'`): `page.tsx`
-(состояние города и дня), `WeatherTabs.tsx` (обработчики `onClick`).
+Внешнего провайдера нет: `generator.ts` выдаёт значения на `Math.random`. Детерминизм отклонён — он имитировал бы
+климатическую модель. Инварианты полей — `projectbrief.md`.
 
-### 3. Skeleton вместо текста загрузки
+### 3. Кэш в памяти без TTL
 
-Заглушка держит геометрию будущего контента и не выводит текст: состояние объявляется a11y-атрибутами, состав заглушки —
-`components/LoadingSkeleton.tsx`; `'use client'` ему не нужен, это презентационная разметка внутри клиентского `page.tsx`.
-Анимация отключается по `prefers-reduced-motion` (`page.module.css`). Suspense не используется: оба запроса клиентские
-(SWR).
+`cache.ts` — `lru-cache` на процесс, ключ `(slug, date)`, `resetWeatherCache()` для тестов. TTL отклонён: прогноз на
+календарную дату не устаревает; HMR в `next dev` может обнулять синглтон — это ожидаемо.
 
-### 4. Данные из SQLite через Drizzle
+### 4. Сервис — единственная точка сборки прогноза
 
-Один экземпляр `better-sqlite3` + `drizzle` в `src/lib/db.ts` (singleton на процесс) и создание таблиц при импорте.
-Поля, нумерация дней и типы — `src/lib/schema.ts`. Инварианты, которые держит код: 7 записей на город, порядок дней
-берётся из `DAYS_OF_WEEK` (`src/lib/constants.ts`), а не из БД.
+`service.ts` ищет город, считает «сегодня» и начало недели в TZ города и собирает дни по схеме «кэш → генератор → кэш».
+`isToday` пересчитывается при чтении — день не «залипает» на смене суток. Даты — `dates.ts`, ошибки — `errors.ts`.
 
-### 5. Компонентная архитектура
+### 5. Поиск города на клиенте вместо `<select>`
 
-Неочевидное: пропсы — локальный `interface Props` в файле компонента, а не общий модуль типов. Остальное (файл на
-компонент, CSS Modules, alias `@/*`) — `AGENTS.md`.
+`<select>` заменён полем с подсказками: нужен поиск по русскому и английскому названию, нативный select его не даёт.
+`/api/cities` отдаётся один раз и фильтруется на клиенте (`searchCities`); ручка поиска отклонена. Дебаунс 200 мс нужен
+для стабильности списка, не для экономии запросов. Активный день — с сервера (`isToday`), даты — UTC-полночь.
 
-## Особенности API route
+### 6. Миграции вместо DDL при импорте
 
-Route идёт по `DAYS_OF_WEEK` и ищет строку по `day_of_week`, поэтому пропущенные дни остаются `undefined` и доходят до UI
-как `—`. Контракт — `techContext.md`.
+`db.ts` только открывает базу; схема — `drizzle-kit`, данные — `scripts/seed.ts` (идемпотентный upsert по `slug`). DDL при
+импорте отклонён: расходился со схемой и ломал тесты. Команды — `techContext.md`.
 
-## Работа с БД
+### 7. Компонентная архитектура и route handlers
 
-- `dev.db` — локальный SQLite в корне проекта, вне git (правила — `AGENTS.md`); `drizzle.config.ts` — конфиг drizzle-kit
-  для миграций и схемы.
-- Seed существует в двух видах: `src/lib/seed.ts` (Drizzle, `seed()` вызывается на уровне модуля) и корневой
-  `seed.js` (чистый `better-sqlite3`); состояние обоих и риски запуска — «Известные дефекты» в `progress.md`.
+Пропсы — локальный `interface Props` в файле компонента, не общий модуль типов. Перед запросом к БД нужен `connection()`
+(`better-sqlite3` синхронный, иначе ответ закэшируется пререндером), вызов — вне `try`: это сигнал Next.js, не ошибка API.
+
+### 8. Тема: `data-theme` на `<html>`
+
+Светлая — дефолт в `:root`, тёмная (Monokai) — `:root[data-theme='dark']`; `prefers-color-scheme` отклонён: дефолт задан
+продуктом, не ОС. Выбор в `localStorage` применяет инлайн-скрипт в `<head>` до отрисовки (`useEffect` дал бы вспышку).
+Заливка акцента `#c2185b`, а не Monokai-розовый `#f92672`: на розовом текст не добирает 4.5:1.

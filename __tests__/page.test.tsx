@@ -1,279 +1,260 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { mutate } from 'swr';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import Home from '@/app/page';
-import { useCities } from '@/hooks/useWeather';
-import { useCityWeeklyWeather } from '@/hooks/useCityWeeklyWeather';
-import type { WeatherDay } from '@/types/weather';
+import { useCities } from '@/hooks/useCities';
+import { useCityForecast } from '@/hooks/useCityForecast';
+import { DEBOUNCE_MS } from '@/lib/cityQuery';
+import type { CityDTO, ForecastDay, ForecastResponse } from '@/types/weather';
 
-jest.mock('swr', () => ({ mutate: jest.fn() }));
-jest.mock('@/hooks/useWeather');
-jest.mock('@/hooks/useCityWeeklyWeather');
+jest.mock('@/hooks/useCities');
+jest.mock('@/hooks/useCityForecast');
 
 const mockUseCities = jest.mocked(useCities);
-const mockUseCityWeeklyWeather = jest.mocked(useCityWeeklyWeather);
-const mockMutate = jest.mocked(mutate);
+const mockUseCityForecast = jest.mocked(useCityForecast);
 
-const CITIES = ['Москва', 'Лунный Берег'];
+const city = (slug: string, name: string, nameEn: string): CityDTO => ({
+  slug,
+  name,
+  nameEn,
+  country: 'Россия',
+  lat: 0,
+  lon: 0,
+});
 
-/** 4 ноября 2026 — среда: `getDay()` === 3, поэтому индекс дня по умолчанию (3 + 6) % 7 = 2. */
-const TODAY = new Date(2026, 10, 4, 12, 0, 0);
+const MOSCOW = city('moscow', 'Москва', 'Moscow');
+const MONTREAL = city('montreal', 'Монреаль', 'Montreal');
+
+const day = (date: string, isToday: boolean): ForecastDay => ({
+  date,
+  maxTempC: 24,
+  minTempC: 15,
+  precipitationMm: 0.4,
+  pressureHpa: 1008,
+  humidityPct: 65,
+  windSpeedMs: 3.5,
+  condition: 'rain',
+  isDay: true,
+  isToday,
+});
+
+/** Неделя 9–15 ноября 2026, «сегодня» — среда 11 ноября (по ответу сервера). */
 const TODAY_INDEX = 2;
-
-const WEEK: WeatherDay[] = [
-  { day: 'Понедельник', maxTempC: null, minTempC: null, precipitationMm: null, pressureHpa: null },
-  { day: 'Вторник', maxTempC: 26, minTempC: 19, precipitationMm: 1.5, pressureHpa: 1010 },
-  { day: 'Среда', maxTempC: 24, minTempC: 15, precipitationMm: 0.4, pressureHpa: 1008 },
-  { day: 'Четверг', maxTempC: 20, minTempC: 12, precipitationMm: 0, pressureHpa: 1005 },
-  { day: 'Пятница', maxTempC: 21 },
-  { day: 'Суббота', maxTempC: 22 },
-  { day: 'Воскресенье', maxTempC: 23 },
+const DATES = [
+  '2026-11-09',
+  '2026-11-10',
+  '2026-11-11',
+  '2026-11-12',
+  '2026-11-13',
+  '2026-11-14',
+  '2026-11-15',
+];
+const DAYS = DATES.map((date, index) => day(date, index === TODAY_INDEX));
+const TAB_LABELS = [
+  'Пн 09.11',
+  'Вт 10.11',
+  'Ср 11.11',
+  'Чт 12.11',
+  'Пт 13.11',
+  'Сб 14.11',
+  'Вс 15.11',
 ];
 
+const FORECAST: ForecastResponse = {
+  city: { slug: 'moscow', name: 'Москва', timezone: 'Europe/Moscow' },
+  weekStart: '2026-11-09',
+  days: DAYS,
+};
+
 interface CitiesState {
-  data?: { cities: string[] };
+  data?: { cities: CityDTO[] };
   error?: Error;
   isLoading?: boolean;
 }
 
-interface WeeklyState {
-  data?: WeatherDay[];
+interface ForecastState {
+  data?: ForecastResponse;
   error?: Error;
   isLoading?: boolean;
+  mutate?: jest.Mock;
 }
 
 /** Полный `SWRResponse`, чтобы мок `useCities` соответствовал типу возврата хука. */
 const citiesResponse = ({ data, error, isLoading = false }: CitiesState = {}): ReturnType<
   typeof useCities
-> => ({
+> => ({ data, error, isLoading, isValidating: false, mutate: jest.fn() });
+
+const forecastResponse = ({
+  data,
+  error,
+  isLoading = false,
+  mutate = jest.fn(),
+}: ForecastState = {}): ReturnType<typeof useCityForecast> => ({
   data,
   error,
   isLoading,
-  isValidating: false,
-  mutate: jest.fn(),
+  mutate,
 });
 
-const weeklyResponse = ({ data, error, isLoading = false }: WeeklyState = {}): ReturnType<
-  typeof useCityWeeklyWeather
-> => ({
-  data,
-  error,
-  isLoading,
-});
+const combobox = () => screen.getByRole('combobox', { name: 'Город' });
+const cardTitle = () => screen.getByRole('heading', { level: 3 });
+const tab = (label: string) => screen.getByRole('tab', { name: label });
 
-const dropdown = () => screen.getByRole('combobox');
-const tab = (day: string) => screen.getByRole('button', { name: day });
-const retryButton = () => screen.getByRole('button', { name: 'Повторить' });
-
-const renderPage = () => render(<Home />);
+/** Выбор города как в браузере: ввод → дебаунс → клик по подсказке. */
+const selectCity = (query: string, optionName: RegExp) => {
+  fireEvent.change(combobox(), { target: { value: query } });
+  act(() => {
+    jest.advanceTimersByTime(DEBOUNCE_MS);
+  });
+  fireEvent.click(screen.getByRole('option', { name: optionName }));
+};
 
 describe('Home page', () => {
   beforeEach(() => {
     jest.useFakeTimers();
-    jest.setSystemTime(TODAY);
-    mockUseCities.mockReturnValue(citiesResponse({ data: { cities: CITIES } }));
-    mockUseCityWeeklyWeather.mockReturnValue(weeklyResponse());
+    mockUseCities.mockReturnValue(citiesResponse({ data: { cities: [MOSCOW, MONTREAL] } }));
+    mockUseCityForecast.mockReturnValue(forecastResponse());
   });
 
   afterEach(() => {
     jest.useRealTimers();
   });
 
-  test('renders the city dropdown with a placeholder and all cities', () => {
-    renderPage();
+  test('без выбора города показывает только поле поиска', () => {
+    render(<Home />);
 
-    expect(dropdown()).toHaveValue('');
-    expect(screen.getByRole('option', { name: 'Выберите город' })).toHaveAttribute('value', '');
-    CITIES.forEach((city) => {
-      expect(screen.getByRole('option', { name: city })).toBeInTheDocument();
-    });
-    expect(screen.getAllByRole('option')).toHaveLength(CITIES.length + 1);
+    expect(combobox()).toBeInTheDocument();
+    expect(screen.queryByRole('tablist')).toBeNull();
+    expect(screen.queryByRole('heading', { level: 3 })).toBeNull();
+    expect(mockUseCityForecast).toHaveBeenLastCalledWith(null);
   });
 
-  test('does not render the dropdown when the city list is empty', () => {
-    mockUseCities.mockReturnValue(citiesResponse({ data: { cities: [] } }));
-
-    renderPage();
-
-    expect(screen.queryByRole('combobox')).toBeNull();
-  });
-
-  test('renders a select-shaped skeleton instead of the dropdown while cities are loading', () => {
+  test('показывает заглушку поля, пока города загружаются', () => {
     mockUseCities.mockReturnValue(citiesResponse({ isLoading: true }));
 
-    renderPage();
+    render(<Home />);
 
-    expect(screen.queryByRole('combobox')).toBeNull();
-    expect(screen.getByRole('status', { name: 'Загрузка списка городов' })).toHaveClass(
-      'skeletonSelect',
-    );
-  });
-
-  test('does not render the cities skeleton once the city list is loaded', () => {
-    renderPage();
-
-    expect(screen.queryByRole('status', { name: 'Загрузка списка городов' })).toBeNull();
-  });
-
-  test('does not render the dropdown when the cities request has neither data nor error', () => {
-    mockUseCities.mockReturnValue(citiesResponse());
-
-    renderPage();
-
-    // Без данных список городов не подменяется: ни select, ни заглушки загрузки.
-    expect(screen.queryByRole('combobox')).toBeNull();
-    expect(screen.queryByRole('status', { name: 'Загрузка списка городов' })).toBeNull();
-  });
-
-  test('prefers the cities skeleton over the dropdown while a request is in flight', () => {
-    mockUseCities.mockReturnValue(citiesResponse({ data: { cities: CITIES }, isLoading: true }));
-
-    renderPage();
-
-    // Пока идёт запрос, даже закэшированные города не открывают select: место держит заглушка.
     expect(screen.queryByRole('combobox')).toBeNull();
     expect(screen.getByRole('status', { name: 'Загрузка списка городов' })).toBeInTheDocument();
   });
 
-  test('shows the cities error message and hides the weather error', () => {
+  test('скрывает поле, если список городов пуст', () => {
+    mockUseCities.mockReturnValue(citiesResponse({ data: { cities: [] } }));
+
+    render(<Home />);
+
+    expect(screen.queryByRole('combobox')).toBeNull();
+    expect(screen.queryByRole('status', { name: 'Загрузка списка городов' })).toBeNull();
+  });
+
+  test('показывает ошибку загрузки городов', () => {
     mockUseCities.mockReturnValue(citiesResponse({ error: new Error('DB is down') }));
 
-    renderPage();
+    render(<Home />);
 
     expect(screen.getByText('Не удалось загрузить города.')).toBeInTheDocument();
-    expect(screen.queryByText(/Не удалось загрузить погоду\./)).toBeNull();
+    expect(screen.queryByRole('combobox')).toBeNull();
   });
 
-  test('does not show the cities error message when cities load fine', () => {
-    renderPage();
+  test('после выбора города запрашивает прогноз по slug', () => {
+    render(<Home />);
 
-    expect(screen.queryByText('Не удалось загрузить города.')).toBeNull();
+    selectCity('Мос', /Москва/);
+
+    expect(mockUseCityForecast).toHaveBeenLastCalledWith('moscow');
   });
 
-  test('selects the day of the week matching today before any interaction', () => {
-    mockUseCityWeeklyWeather.mockReturnValue(weeklyResponse({ data: WEEK }));
+  test('после выбора города показывает семь табов и карточку', () => {
+    mockUseCityForecast.mockReturnValue(forecastResponse({ data: FORECAST }));
 
-    renderPage();
+    render(<Home />);
+    selectCity('Мос', /Москва/);
 
-    expect(screen.getByRole('heading')).toHaveTextContent(WEEK[TODAY_INDEX].day);
-    expect(tab(WEEK[TODAY_INDEX].day)).toHaveClass('active');
-    expect(tab(WEEK[0].day)).not.toHaveClass('active');
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs).toHaveLength(7);
+    expect(tabs.map((item) => item.textContent)).toEqual(TAB_LABELS);
+    expect(cardTitle()).toHaveTextContent('Среда, 11.11.2026');
+    expect(screen.getByText('Город: Москва')).toBeInTheDocument();
   });
 
-  test('switches the displayed day when another tab is clicked', () => {
-    mockUseCityWeeklyWeather.mockReturnValue(weeklyResponse({ data: WEEK }));
+  test('активным по умолчанию становится день с isToday из ответа сервера', () => {
+    mockUseCityForecast.mockReturnValue(forecastResponse({ data: FORECAST }));
 
-    renderPage();
-    fireEvent.click(tab(WEEK[0].day));
+    render(<Home />);
+    selectCity('Мос', /Москва/);
 
-    expect(screen.getByRole('heading')).toHaveTextContent(WEEK[0].day);
-    expect(tab(WEEK[0].day)).toHaveClass('active');
-    expect(tab(WEEK[TODAY_INDEX].day)).not.toHaveClass('active');
+    expect(tab('Ср 11.11')).toHaveAttribute('aria-selected', 'true');
+    expect(tab('Пн 09.11')).toHaveAttribute('aria-selected', 'false');
+    expect(cardTitle()).toHaveTextContent('Среда, 11.11.2026');
   });
 
-  test('passes the chosen city to the weekly weather hook and resets it to null', () => {
-    renderPage();
+  test('переключает день по клику на таб', () => {
+    mockUseCityForecast.mockReturnValue(forecastResponse({ data: FORECAST }));
 
-    fireEvent.change(dropdown(), { target: { value: CITIES[0] } });
+    render(<Home />);
+    selectCity('Мос', /Москва/);
+    fireEvent.click(tab('Пт 13.11'));
 
-    expect(mockUseCityWeeklyWeather).toHaveBeenLastCalledWith(CITIES[0]);
-    expect(dropdown()).toHaveValue(CITIES[0]);
-
-    fireEvent.change(dropdown(), { target: { value: '' } });
-
-    expect(mockUseCityWeeklyWeather).toHaveBeenLastCalledWith(null);
-    expect(dropdown()).toHaveValue('');
+    expect(cardTitle()).toHaveTextContent('Пятница, 13.11.2026');
+    expect(tab('Пт 13.11')).toHaveAttribute('aria-selected', 'true');
+    expect(tab('Ср 11.11')).toHaveAttribute('aria-selected', 'false');
   });
 
-  test('shows the forecast skeleton only when a city is selected', () => {
-    mockUseCityWeeklyWeather.mockReturnValue(weeklyResponse({ isLoading: true }));
+  test('сбрасывает выбранный день при смене города', () => {
+    mockUseCityForecast.mockReturnValue(forecastResponse({ data: FORECAST }));
 
-    renderPage();
+    render(<Home />);
+    selectCity('Мос', /Москва/);
+    fireEvent.click(tab('Пт 13.11'));
+    selectCity('Мон', /Монреаль/);
+
+    expect(cardTitle()).toHaveTextContent('Среда, 11.11.2026');
+  });
+
+  test('показывает заглушку прогноза только после выбора города', () => {
+    mockUseCityForecast.mockReturnValue(forecastResponse({ isLoading: true }));
+
+    render(<Home />);
     expect(screen.queryByRole('status', { name: 'Загрузка прогноза' })).toBeNull();
-    expect(screen.queryByText('Загрузка...')).toBeNull();
 
-    fireEvent.change(dropdown(), { target: { value: CITIES[1] } });
+    selectCity('Мос', /Москва/);
 
     const skeleton = screen.getByRole('status', { name: 'Загрузка прогноза' });
-    expect(skeleton).toHaveClass('skeletonWeather');
-    // Семь табов дней и пять строк карточки — та же геометрия, что у загруженного прогноза.
     expect(skeleton.querySelectorAll('.skeletonTab')).toHaveLength(7);
-    expect(skeleton.querySelectorAll('.skeletonLine')).toHaveLength(5);
   });
 
-  test('hides the forecast skeleton when the weekly data arrives', () => {
-    mockUseCityWeeklyWeather.mockReturnValue(weeklyResponse({ data: WEEK }));
-
-    renderPage();
-    fireEvent.change(dropdown(), { target: { value: CITIES[1] } });
-
-    expect(screen.queryByRole('status', { name: 'Загрузка прогноза' })).toBeNull();
-    expect(screen.getByText(`Город: ${CITIES[1]}`)).toBeInTheDocument();
-  });
-
-  test('renders weather details of the selected day', () => {
-    mockUseCityWeeklyWeather.mockReturnValue(weeklyResponse({ data: WEEK }));
-
-    renderPage();
-    fireEvent.change(dropdown(), { target: { value: CITIES[0] } });
-
-    expect(screen.getByText(`Город: ${CITIES[0]}`)).toBeInTheDocument();
-    expect(screen.getByText('Максимальная температура: 24°C')).toBeInTheDocument();
-    expect(screen.getByText('Минимальная температура: 15°C')).toBeInTheDocument();
-    expect(screen.getByText('Осадки: 0.4 мм')).toBeInTheDocument();
-    expect(screen.getByText('Давление: 1008 гПа')).toBeInTheDocument();
-  });
-
-  test('renders dashes when the day has no measurements', () => {
-    mockUseCityWeeklyWeather.mockReturnValue(weeklyResponse({ data: WEEK }));
-
-    renderPage();
-    fireEvent.click(tab(WEEK[0].day));
-
-    expect(screen.getByText('Максимальная температура: —°C')).toBeInTheDocument();
-    expect(screen.getByText('Минимальная температура: —°C')).toBeInTheDocument();
-    expect(screen.getByText('Осадки: — мм')).toBeInTheDocument();
-    expect(screen.getByText('Давление: — гПа')).toBeInTheDocument();
-  });
-
-  test('shows the weather error and revalidates the current city on retry', () => {
-    mockUseCityWeeklyWeather.mockReturnValue(weeklyResponse({ error: new Error('Not found') }));
-
-    renderPage();
-    fireEvent.change(dropdown(), { target: { value: CITIES[0] } });
-
-    expect(screen.getByText(/Не удалось загрузить погоду\./)).toBeInTheDocument();
-    // Пробел между текстом ошибки и кнопкой часть разметки — проверяем его наличие.
-    expect(screen.getByText(/Не удалось загрузить погоду\./)).toHaveTextContent(
-      'Не удалось загрузить погоду. Повторить',
+  test('показывает ошибку прогноза и повторяет запрос через mutate', () => {
+    const mutate = jest.fn();
+    mockUseCityForecast.mockReturnValue(
+      forecastResponse({ error: new Error('Ошибка 500'), mutate }),
     );
 
-    fireEvent.click(retryButton());
+    render(<Home />);
+    selectCity('Мос', /Москва/);
 
-    expect(mockMutate).toHaveBeenCalledTimes(1);
-    expect(mockMutate).toHaveBeenCalledWith(`/api/weather?city=${encodeURIComponent(CITIES[0])}`);
+    expect(screen.getByText(/Не удалось загрузить погоду\./)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Повторить' }));
+
+    expect(mutate).toHaveBeenCalledTimes(1);
   });
 
-  test('does not revalidate anything on retry when no city is selected', () => {
-    mockUseCityWeeklyWeather.mockReturnValue(weeklyResponse({ error: new Error('Not found') }));
+  test('не показывает ошибку прогноза при успешном ответе', () => {
+    mockUseCityForecast.mockReturnValue(forecastResponse({ data: FORECAST }));
 
-    renderPage();
-    fireEvent.click(retryButton());
-
-    expect(mockMutate).not.toHaveBeenCalled();
-  });
-
-  test('does not render tabs and weather info without weekly data', () => {
-    renderPage();
-
-    expect(screen.queryByRole('heading')).toBeNull();
-    expect(screen.queryByRole('button', { name: WEEK[0].day })).toBeNull();
-  });
-
-  test('does not show the weather error when the weekly request succeeds', () => {
-    mockUseCityWeeklyWeather.mockReturnValue(weeklyResponse({ data: WEEK }));
-
-    renderPage();
+    render(<Home />);
+    selectCity('Мос', /Москва/);
 
     expect(screen.queryByText(/Не удалось загрузить погоду\./)).toBeNull();
+  });
+
+  test('очистка поля скрывает прогноз и сбрасывает город', () => {
+    mockUseCityForecast.mockReturnValue(forecastResponse({ data: FORECAST }));
+
+    render(<Home />);
+    selectCity('Мос', /Москва/);
+    fireEvent.click(screen.getByRole('button', { name: 'Очистить город' }));
+
+    expect(mockUseCityForecast).toHaveBeenLastCalledWith(null);
+    expect(screen.queryByRole('tablist')).toBeNull();
+    expect(screen.queryByRole('heading', { level: 3 })).toBeNull();
   });
 });

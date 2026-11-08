@@ -1,0 +1,902 @@
+[
+  {
+    "slug": "moscow",
+    "name": "Москва",
+    "nameEn": "Moscow",
+    "country": "Россия",
+    "lat": 55.7558,
+    "lon": 37.6173,
+    "timezone": "Europe/Moscow"
+  },
+  {
+    "slug": "saint-petersburg",
+    "name": "Санкт-Петербург",
+    "nameEn": "Saint Petersburg",
+    "country": "Россия",
+    "lat": 59.9343,
+    "lon": 30.3351,
+    "timezone": "Europe/Moscow"
+  },
+  {
+    "slug": "nizhny-novgorod",
+    "name": "Нижний Новгород",
+    "nameEn": "Nizhny Novgorod",
+    "country": "Россия",
+    "lat": 56.3269,
+    "lon": 44.0059,
+    "timezone": "Europe/Moscow"
+  },
+  {
+    "slug": "kazan",
+    "name": "Казань",
+    "nameEn": "Kazan",
+    "country": "Россия",
+    "lat": 55.7963,
+    "lon": 49.1088,
+    "timezone": "Europe/Moscow"
+  },
+  {
+    "slug": "samara",
+    "name": "Самара",
+    "nameEn": "Samara",
+    "country": "Россия",
+    "lat": 53.1959,
+    "lon": 50.1002,
+    "timezone": "Europe/Samara"
+  },
+  {
+    "slug": "yekaterinburg",
+    "name": "Екатеринбург",
+    "nameEn": "Yekaterinburg",
+    "country": "Россия",
+    "lat": 56.8389,
+    "lon": 60.6057,
+    "timezone": "Asia/Yekaterinburg"
+  },
+  {
+    "slug": "novosibirsk",
+    "name": "Новосибирск",
+    "nameEn": "Novosibirsk",
+    "country": "Россия",
+    "lat": 55.0084,
+    "lon": 82.9357,
+    "timezone": "Asia/Novosibirsk"
+  },
+  {
+    "slug": "omsk",
+    "name": "Омск",
+    "nameEn": "Omsk",
+    "country": "Россия",
+    "lat": 54.9885,
+    "lon": 73.3242,
+    "timezone": "Asia/Omsk"
+  },
+  {
+    "slug": "krasnoyarsk",
+    "name": "Красноярск",
+    "nameEn": "Krasnoyarsk",
+    "country": "Россия",
+    "lat": 56.0153,
+    "lon": 92.8932,
+    "timezone": "Asia/Krasnoyarsk"
+  },
+  {
+    "slug": "irkutsk",
+    "name": "Иркутск",
+    "nameEn": "Irkutsk",
+    "country": "Россия",
+    "lat": 52.287,
+    "lon": 104.305,
+    "timezone": "Asia/Irkutsk"
+  },
+  {
+    "slug": "yakutsk",
+    "name": "Якутск",
+    "nameEn": "Yakutsk",
+    "country": "Россия",
+    "lat": 62.0355,
+    "lon": 129.7331,
+    "timezone": "Asia/Yakutsk"
+  },
+  {
+    "slug": "vladivostok",
+    "name": "Владивосток",
+    "nameEn": "Vladivostok",
+    "country": "Россия",
+    "lat": 43.1155,
+    "lon": 131.8855,
+    "timezone": "Asia/Vladivostok"
+  },
+  {
+    "slug": "kaliningrad",
+    "name": "Калининград",
+    "nameEn": "Kaliningrad",
+    "country": "Россия",
+    "lat": 54.7104,
+    "lon": 20.4522,
+    "timezone": "Europe/Kaliningrad"
+  },
+  {
+    "slug": "sochi",
+    "name": "Сочи",
+    "nameEn": "Sochi",
+    "country": "Россия",
+    "lat": 43.5855,
+    "lon": 39.7231,
+    "timezone": "Europe/Moscow"
+  },
+  {
+    "slug": "london",
+    "name": "Лондон",
+    "nameEn": "London",
+    "country": "Великобритания",
+    "lat": 51.5074,
+    "lon": -0.1278,
+    "timezone": "Europe/London"
+  },
+  {
+    "slug": "paris",
+    "name": "Париж",
+    "nameEn": "Paris",
+    "country": "Франция",
+    "lat": 48.8566,
+    "lon": 2.3522,
+    "timezone": "Europe/Paris"
+  },
+  {
+    "slug": "berlin",
+    "name": "Берлин",
+    "nameEn": "Berlin",
+    "country": "Германия",
+    "lat": 52.52,
+    "lon": 13.405,
+    "timezone": "Europe/Berlin"
+  },
+  {
+    "slug": "munich",
+    "name": "Мюнхен",
+    "nameEn": "Munich",
+    "country": "Германия",
+    "lat": 48.1351,
+    "lon": 11.582,
+    "timezone": "Europe/Berlin"
+  },
+  {
+    "slug": "madrid",
+    "name": "Мадрид",
+    "nameEn": "Madrid",
+    "country": "Испания",
+    "lat": 40.4168,
+    "lon": -3.7038,
+    "timezone": "Europe/Madrid"
+  },
+  {
+    "slug": "rome",
+    "name": "Рим",
+    "nameEn": "Rome",
+    "country": "Италия",
+    "lat": 41.9028,
+    "lon": 12.4964,
+    "timezone": "Europe/Rome"
+  },
+  {
+    "slug": "amsterdam",
+    "name": "Амстердам",
+    "nameEn": "Amsterdam",
+    "country": "Нидерланды",
+    "lat": 52.3676,
+    "lon": 4.9041,
+    "timezone": "Europe/Amsterdam"
+  },
+  {
+    "slug": "brussels",
+    "name": "Брюссель",
+    "nameEn": "Brussels",
+    "country": "Бельгия",
+    "lat": 50.8503,
+    "lon": 4.3517,
+    "timezone": "Europe/Brussels"
+  },
+  {
+    "slug": "vienna",
+    "name": "Вена",
+    "nameEn": "Vienna",
+    "country": "Австрия",
+    "lat": 48.2082,
+    "lon": 16.3738,
+    "timezone": "Europe/Vienna"
+  },
+  {
+    "slug": "prague",
+    "name": "Прага",
+    "nameEn": "Prague",
+    "country": "Чехия",
+    "lat": 50.0755,
+    "lon": 14.4378,
+    "timezone": "Europe/Prague"
+  },
+  {
+    "slug": "warsaw",
+    "name": "Варшава",
+    "nameEn": "Warsaw",
+    "country": "Польша",
+    "lat": 52.2297,
+    "lon": 21.0122,
+    "timezone": "Europe/Warsaw"
+  },
+  {
+    "slug": "budapest",
+    "name": "Будапешт",
+    "nameEn": "Budapest",
+    "country": "Венгрия",
+    "lat": 47.4979,
+    "lon": 19.0402,
+    "timezone": "Europe/Budapest"
+  },
+  {
+    "slug": "bucharest",
+    "name": "Бухарест",
+    "nameEn": "Bucharest",
+    "country": "Румыния",
+    "lat": 44.4268,
+    "lon": 26.1025,
+    "timezone": "Europe/Bucharest"
+  },
+  {
+    "slug": "sofia",
+    "name": "София",
+    "nameEn": "Sofia",
+    "country": "Болгария",
+    "lat": 42.6977,
+    "lon": 23.3219,
+    "timezone": "Europe/Sofia"
+  },
+  {
+    "slug": "athens",
+    "name": "Афины",
+    "nameEn": "Athens",
+    "country": "Греция",
+    "lat": 37.9838,
+    "lon": 23.7275,
+    "timezone": "Europe/Athens"
+  },
+  {
+    "slug": "istanbul",
+    "name": "Стамбул",
+    "nameEn": "Istanbul",
+    "country": "Турция",
+    "lat": 41.0082,
+    "lon": 28.9784,
+    "timezone": "Europe/Istanbul"
+  },
+  {
+    "slug": "stockholm",
+    "name": "Стокгольм",
+    "nameEn": "Stockholm",
+    "country": "Швеция",
+    "lat": 59.3293,
+    "lon": 18.0686,
+    "timezone": "Europe/Stockholm"
+  },
+  {
+    "slug": "oslo",
+    "name": "Осло",
+    "nameEn": "Oslo",
+    "country": "Норвегия",
+    "lat": 59.9139,
+    "lon": 10.7522,
+    "timezone": "Europe/Oslo"
+  },
+  {
+    "slug": "copenhagen",
+    "name": "Копенгаген",
+    "nameEn": "Copenhagen",
+    "country": "Дания",
+    "lat": 55.6761,
+    "lon": 12.5683,
+    "timezone": "Europe/Copenhagen"
+  },
+  {
+    "slug": "helsinki",
+    "name": "Хельсинки",
+    "nameEn": "Helsinki",
+    "country": "Финляндия",
+    "lat": 60.1699,
+    "lon": 24.9384,
+    "timezone": "Europe/Helsinki"
+  },
+  {
+    "slug": "dublin",
+    "name": "Дублин",
+    "nameEn": "Dublin",
+    "country": "Ирландия",
+    "lat": 53.3498,
+    "lon": -6.2603,
+    "timezone": "Europe/Dublin"
+  },
+  {
+    "slug": "lisbon",
+    "name": "Лиссабон",
+    "nameEn": "Lisbon",
+    "country": "Португалия",
+    "lat": 38.7223,
+    "lon": -9.1393,
+    "timezone": "Europe/Lisbon"
+  },
+  {
+    "slug": "zurich",
+    "name": "Цюрих",
+    "nameEn": "Zurich",
+    "country": "Швейцария",
+    "lat": 47.3769,
+    "lon": 8.5417,
+    "timezone": "Europe/Zurich"
+  },
+  {
+    "slug": "reykjavik",
+    "name": "Рейкьявик",
+    "nameEn": "Reykjavik",
+    "country": "Исландия",
+    "lat": 64.1466,
+    "lon": -21.9426,
+    "timezone": "Atlantic/Reykjavik"
+  },
+  {
+    "slug": "kyiv",
+    "name": "Киев",
+    "nameEn": "Kyiv",
+    "country": "Украина",
+    "lat": 50.4501,
+    "lon": 30.5234,
+    "timezone": "Europe/Kiev"
+  },
+  {
+    "slug": "minsk",
+    "name": "Минск",
+    "nameEn": "Minsk",
+    "country": "Беларусь",
+    "lat": 53.9006,
+    "lon": 27.559,
+    "timezone": "Europe/Minsk"
+  },
+  {
+    "slug": "tokyo",
+    "name": "Токио",
+    "nameEn": "Tokyo",
+    "country": "Япония",
+    "lat": 35.6762,
+    "lon": 139.6503,
+    "timezone": "Asia/Tokyo"
+  },
+  {
+    "slug": "seoul",
+    "name": "Сеул",
+    "nameEn": "Seoul",
+    "country": "Южная Корея",
+    "lat": 37.5665,
+    "lon": 126.978,
+    "timezone": "Asia/Seoul"
+  },
+  {
+    "slug": "beijing",
+    "name": "Пекин",
+    "nameEn": "Beijing",
+    "country": "Китай",
+    "lat": 39.9042,
+    "lon": 116.4074,
+    "timezone": "Asia/Shanghai"
+  },
+  {
+    "slug": "shanghai",
+    "name": "Шанхай",
+    "nameEn": "Shanghai",
+    "country": "Китай",
+    "lat": 31.2304,
+    "lon": 121.4737,
+    "timezone": "Asia/Shanghai"
+  },
+  {
+    "slug": "hong-kong",
+    "name": "Гонконг",
+    "nameEn": "Hong Kong",
+    "country": "Китай",
+    "lat": 22.3193,
+    "lon": 114.1694,
+    "timezone": "Asia/Hong_Kong"
+  },
+  {
+    "slug": "singapore",
+    "name": "Сингапур",
+    "nameEn": "Singapore",
+    "country": "Сингапур",
+    "lat": 1.3521,
+    "lon": 103.8198,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "slug": "bangkok",
+    "name": "Бангкок",
+    "nameEn": "Bangkok",
+    "country": "Таиланд",
+    "lat": 13.7563,
+    "lon": 100.5018,
+    "timezone": "Asia/Bangkok"
+  },
+  {
+    "slug": "jakarta",
+    "name": "Джакарта",
+    "nameEn": "Jakarta",
+    "country": "Индонезия",
+    "lat": -6.2088,
+    "lon": 106.8456,
+    "timezone": "Asia/Jakarta"
+  },
+  {
+    "slug": "delhi",
+    "name": "Дели",
+    "nameEn": "Delhi",
+    "country": "Индия",
+    "lat": 28.6139,
+    "lon": 77.209,
+    "timezone": "Asia/Calcutta"
+  },
+  {
+    "slug": "mumbai",
+    "name": "Мумбаи",
+    "nameEn": "Mumbai",
+    "country": "Индия",
+    "lat": 19.076,
+    "lon": 72.8777,
+    "timezone": "Asia/Calcutta"
+  },
+  {
+    "slug": "karachi",
+    "name": "Карачи",
+    "nameEn": "Karachi",
+    "country": "Пакистан",
+    "lat": 24.8607,
+    "lon": 67.0011,
+    "timezone": "Asia/Karachi"
+  },
+  {
+    "slug": "dhaka",
+    "name": "Дакка",
+    "nameEn": "Dhaka",
+    "country": "Бангладеш",
+    "lat": 23.8103,
+    "lon": 90.4125,
+    "timezone": "Asia/Dhaka"
+  },
+  {
+    "slug": "dubai",
+    "name": "Дубай",
+    "nameEn": "Dubai",
+    "country": "ОАЭ",
+    "lat": 25.2048,
+    "lon": 55.2708,
+    "timezone": "Asia/Dubai"
+  },
+  {
+    "slug": "tehran",
+    "name": "Тегеран",
+    "nameEn": "Tehran",
+    "country": "Иран",
+    "lat": 35.6892,
+    "lon": 51.389,
+    "timezone": "Asia/Tehran"
+  },
+  {
+    "slug": "jerusalem",
+    "name": "Иерусалим",
+    "nameEn": "Jerusalem",
+    "country": "Израиль",
+    "lat": 31.7683,
+    "lon": 35.2137,
+    "timezone": "Asia/Jerusalem"
+  },
+  {
+    "slug": "hanoi",
+    "name": "Ханой",
+    "nameEn": "Hanoi",
+    "country": "Вьетнам",
+    "lat": 21.0278,
+    "lon": 105.8342,
+    "timezone": "Asia/Saigon"
+  },
+  {
+    "slug": "manila",
+    "name": "Манила",
+    "nameEn": "Manila",
+    "country": "Филиппины",
+    "lat": 14.5995,
+    "lon": 120.9842,
+    "timezone": "Asia/Manila"
+  },
+  {
+    "slug": "kathmandu",
+    "name": "Катманду",
+    "nameEn": "Kathmandu",
+    "country": "Непал",
+    "lat": 27.7172,
+    "lon": 85.324,
+    "timezone": "Asia/Katmandu"
+  },
+  {
+    "slug": "almaty",
+    "name": "Алматы",
+    "nameEn": "Almaty",
+    "country": "Казахстан",
+    "lat": 43.222,
+    "lon": 76.8512,
+    "timezone": "Asia/Almaty"
+  },
+  {
+    "slug": "tashkent",
+    "name": "Ташкент",
+    "nameEn": "Tashkent",
+    "country": "Узбекистан",
+    "lat": 41.2995,
+    "lon": 69.2401,
+    "timezone": "Asia/Tashkent"
+  },
+  {
+    "slug": "tbilisi",
+    "name": "Тбилиси",
+    "nameEn": "Tbilisi",
+    "country": "Грузия",
+    "lat": 41.7151,
+    "lon": 44.8271,
+    "timezone": "Asia/Tbilisi"
+  },
+  {
+    "slug": "ulaanbaatar",
+    "name": "Улан-Батор",
+    "nameEn": "Ulaanbaatar",
+    "country": "Монголия",
+    "lat": 47.8864,
+    "lon": 106.9057,
+    "timezone": "Asia/Ulaanbaatar"
+  },
+  {
+    "slug": "cairo",
+    "name": "Каир",
+    "nameEn": "Cairo",
+    "country": "Египет",
+    "lat": 30.0444,
+    "lon": 31.2357,
+    "timezone": "Africa/Cairo"
+  },
+  {
+    "slug": "lagos",
+    "name": "Лагос",
+    "nameEn": "Lagos",
+    "country": "Нигерия",
+    "lat": 6.5244,
+    "lon": 3.3792,
+    "timezone": "Africa/Lagos"
+  },
+  {
+    "slug": "nairobi",
+    "name": "Найроби",
+    "nameEn": "Nairobi",
+    "country": "Кения",
+    "lat": -1.2921,
+    "lon": 36.8219,
+    "timezone": "Africa/Nairobi"
+  },
+  {
+    "slug": "johannesburg",
+    "name": "Йоханнесбург",
+    "nameEn": "Johannesburg",
+    "country": "ЮАР",
+    "lat": -26.2041,
+    "lon": 28.0473,
+    "timezone": "Africa/Johannesburg"
+  },
+  {
+    "slug": "cape-town",
+    "name": "Кейптаун",
+    "nameEn": "Cape Town",
+    "country": "ЮАР",
+    "lat": -33.9249,
+    "lon": 18.4241,
+    "timezone": "Africa/Johannesburg"
+  },
+  {
+    "slug": "casablanca",
+    "name": "Касабланка",
+    "nameEn": "Casablanca",
+    "country": "Марокко",
+    "lat": 33.5731,
+    "lon": -7.5898,
+    "timezone": "Africa/Casablanca"
+  },
+  {
+    "slug": "accra",
+    "name": "Аккра",
+    "nameEn": "Accra",
+    "country": "Гана",
+    "lat": 5.6037,
+    "lon": -0.187,
+    "timezone": "Africa/Accra"
+  },
+  {
+    "slug": "addis-ababa",
+    "name": "Аддис-Абеба",
+    "nameEn": "Addis Ababa",
+    "country": "Эфиопия",
+    "lat": 9.032,
+    "lon": 38.7469,
+    "timezone": "Africa/Addis_Ababa"
+  },
+  {
+    "slug": "algiers",
+    "name": "Алжир",
+    "nameEn": "Algiers",
+    "country": "Алжир",
+    "lat": 36.7538,
+    "lon": 3.0588,
+    "timezone": "Africa/Algiers"
+  },
+  {
+    "slug": "tunis",
+    "name": "Тунис",
+    "nameEn": "Tunis",
+    "country": "Тунис",
+    "lat": 36.8065,
+    "lon": 10.1815,
+    "timezone": "Africa/Tunis"
+  },
+  {
+    "slug": "dakar",
+    "name": "Дакар",
+    "nameEn": "Dakar",
+    "country": "Сенегал",
+    "lat": 14.7167,
+    "lon": -17.4677,
+    "timezone": "Africa/Dakar"
+  },
+  {
+    "slug": "new-york",
+    "name": "Нью-Йорк",
+    "nameEn": "New York",
+    "country": "США",
+    "lat": 40.7128,
+    "lon": -74.006,
+    "timezone": "America/New_York"
+  },
+  {
+    "slug": "chicago",
+    "name": "Чикаго",
+    "nameEn": "Chicago",
+    "country": "США",
+    "lat": 41.8781,
+    "lon": -87.6298,
+    "timezone": "America/Chicago"
+  },
+  {
+    "slug": "denver",
+    "name": "Денвер",
+    "nameEn": "Denver",
+    "country": "США",
+    "lat": 39.7392,
+    "lon": -104.9903,
+    "timezone": "America/Denver"
+  },
+  {
+    "slug": "los-angeles",
+    "name": "Лос-Анджелес",
+    "nameEn": "Los Angeles",
+    "country": "США",
+    "lat": 34.0522,
+    "lon": -118.2437,
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "slug": "anchorage",
+    "name": "Анкоридж",
+    "nameEn": "Anchorage",
+    "country": "США",
+    "lat": 61.2181,
+    "lon": -149.9003,
+    "timezone": "America/Anchorage"
+  },
+  {
+    "slug": "honolulu",
+    "name": "Гонолулу",
+    "nameEn": "Honolulu",
+    "country": "США",
+    "lat": 21.3069,
+    "lon": -157.8583,
+    "timezone": "Pacific/Honolulu"
+  },
+  {
+    "slug": "toronto",
+    "name": "Торонто",
+    "nameEn": "Toronto",
+    "country": "Канада",
+    "lat": 43.6532,
+    "lon": -79.3832,
+    "timezone": "America/Toronto"
+  },
+  {
+    "slug": "vancouver",
+    "name": "Ванкувер",
+    "nameEn": "Vancouver",
+    "country": "Канада",
+    "lat": 49.2827,
+    "lon": -123.1207,
+    "timezone": "America/Vancouver"
+  },
+  {
+    "slug": "mexico-city",
+    "name": "Мехико",
+    "nameEn": "Mexico City",
+    "country": "Мексика",
+    "lat": 19.4326,
+    "lon": -99.1332,
+    "timezone": "America/Mexico_City"
+  },
+  {
+    "slug": "havana",
+    "name": "Гавана",
+    "nameEn": "Havana",
+    "country": "Куба",
+    "lat": 23.1136,
+    "lon": -82.3666,
+    "timezone": "America/Havana"
+  },
+  {
+    "slug": "bogota",
+    "name": "Богота",
+    "nameEn": "Bogota",
+    "country": "Колумбия",
+    "lat": 4.711,
+    "lon": -74.0721,
+    "timezone": "America/Bogota"
+  },
+  {
+    "slug": "lima",
+    "name": "Лима",
+    "nameEn": "Lima",
+    "country": "Перу",
+    "lat": -12.0464,
+    "lon": -77.0428,
+    "timezone": "America/Lima"
+  },
+  {
+    "slug": "santiago",
+    "name": "Сантьяго",
+    "nameEn": "Santiago",
+    "country": "Чили",
+    "lat": -33.4489,
+    "lon": -70.6693,
+    "timezone": "America/Santiago"
+  },
+  {
+    "slug": "sao-paulo",
+    "name": "Сан-Паулу",
+    "nameEn": "Sao Paulo",
+    "country": "Бразилия",
+    "lat": -23.5505,
+    "lon": -46.6333,
+    "timezone": "America/Sao_Paulo"
+  },
+  {
+    "slug": "buenos-aires",
+    "name": "Буэнос-Айрес",
+    "nameEn": "Buenos Aires",
+    "country": "Аргентина",
+    "lat": -34.6037,
+    "lon": -58.3816,
+    "timezone": "America/Buenos_Aires"
+  },
+  {
+    "slug": "montevideo",
+    "name": "Монтевидео",
+    "nameEn": "Montevideo",
+    "country": "Уругвай",
+    "lat": -34.9011,
+    "lon": -56.1645,
+    "timezone": "America/Montevideo"
+  },
+  {
+    "slug": "caracas",
+    "name": "Каракас",
+    "nameEn": "Caracas",
+    "country": "Венесуэла",
+    "lat": 10.4806,
+    "lon": -66.9036,
+    "timezone": "America/Caracas"
+  },
+  {
+    "slug": "quito",
+    "name": "Кито",
+    "nameEn": "Quito",
+    "country": "Эквадор",
+    "lat": -0.1807,
+    "lon": -78.4678,
+    "timezone": "America/Guayaquil"
+  },
+  {
+    "slug": "sydney",
+    "name": "Сидней",
+    "nameEn": "Sydney",
+    "country": "Австралия",
+    "lat": -33.8688,
+    "lon": 151.2093,
+    "timezone": "Australia/Sydney"
+  },
+  {
+    "slug": "melbourne",
+    "name": "Мельбурн",
+    "nameEn": "Melbourne",
+    "country": "Австралия",
+    "lat": -37.8136,
+    "lon": 144.9631,
+    "timezone": "Australia/Melbourne"
+  },
+  {
+    "slug": "brisbane",
+    "name": "Брисбен",
+    "nameEn": "Brisbane",
+    "country": "Австралия",
+    "lat": -27.4698,
+    "lon": 153.0251,
+    "timezone": "Australia/Brisbane"
+  },
+  {
+    "slug": "perth",
+    "name": "Перт",
+    "nameEn": "Perth",
+    "country": "Австралия",
+    "lat": -31.9523,
+    "lon": 115.8613,
+    "timezone": "Australia/Perth"
+  },
+  {
+    "slug": "adelaide",
+    "name": "Аделаида",
+    "nameEn": "Adelaide",
+    "country": "Австралия",
+    "lat": -34.9285,
+    "lon": 138.6007,
+    "timezone": "Australia/Adelaide"
+  },
+  {
+    "slug": "auckland",
+    "name": "Окленд",
+    "nameEn": "Auckland",
+    "country": "Новая Зеландия",
+    "lat": -36.8485,
+    "lon": 174.7633,
+    "timezone": "Pacific/Auckland"
+  },
+  {
+    "slug": "wellington",
+    "name": "Веллингтон",
+    "nameEn": "Wellington",
+    "country": "Новая Зеландия",
+    "lat": -41.2866,
+    "lon": 174.7756,
+    "timezone": "Pacific/Auckland"
+  },
+  {
+    "slug": "suva",
+    "name": "Сува",
+    "nameEn": "Suva",
+    "country": "Фиджи",
+    "lat": -18.1416,
+    "lon": 178.4419,
+    "timezone": "Pacific/Fiji"
+  },
+  {
+    "slug": "port-moresby",
+    "name": "Порт-Морсби",
+    "nameEn": "Port Moresby",
+    "country": "Папуа — Новая Гвинея",
+    "lat": -9.4438,
+    "lon": 147.1803,
+    "timezone": "Pacific/Port_Moresby"
+  }
+]

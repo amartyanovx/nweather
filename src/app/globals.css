@@ -1,17 +1,39 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Палитра в одном месте: контраст текста ≥ 4.5:1, границ ≥ 3:1 (WCAG AA). */
+  color-scheme: light;
+  --background: #b7cddf;
+  --foreground: #10293c;
+  --surface: #eaf2f8;
+  --muted: #33556b;
+  --border: #47708e;
+  --accent: #1d6fa8;
+  --accent-strong: #175983;
+  --accent-contrast: #ffffff;
+  --hover: #c3d9e9;
+  --focus-ring: rgba(29, 111, 168, 0.4);
+  --skeleton: #7aa5c3;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Monokai: фон #272822, текст #f8f8f2; заливка акцента — #c2185b, потому что на #f92672 текст не добирает 4.5:1. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --background: #272822;
+  --foreground: #f8f8f2;
+  --surface: #3e3d32;
+  --muted: #c5bfa8;
+  --border: #948f73;
+  --accent: #c2185b;
+  --accent-strong: #a3154d;
+  --accent-contrast: #f8f8f2;
+  --hover: #4a4839;
+  --focus-ring: rgba(249, 38, 114, 0.45);
+  --skeleton: #615d47;
 }
 
 html {
   height: 100%;
+  /* Фон на корне: canvas и overscroll красятся им, иначе за пределами body видно белое. */
+  background: var(--background);
 }
 
 html,
@@ -25,7 +47,6 @@ body {
   display: flex;
   flex-direction: column;
   color: var(--foreground);
-  background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -40,10 +61,4 @@ body {
 a {
   color: inherit;
   text-decoration: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
 }
