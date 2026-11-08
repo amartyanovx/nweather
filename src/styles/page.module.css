@@ -4,18 +4,127 @@
   margin-bottom: 16px;
 }
 
-.select {
+.search {
+  position: relative;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.searchLabel {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.searchField {
+  position: relative;
+}
+
+.searchInput {
   display: block;
   width: 100%;
-  max-width: 300px;
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: 24px;
+  height: 40px;
+  /* padding-right держит место под крестик, чтобы он не перекрывал текст. */
+  padding: 0 36px 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--foreground);
+  font: inherit;
+}
+
+.searchInput:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.clearButton {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  transform: translateY(-50%);
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.clearButton:hover {
+  background: var(--hover);
+  color: var(--foreground);
+}
+
+.suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  z-index: 10;
+  max-height: 260px;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  box-shadow: 0 8px 20px rgba(16, 41, 60, 0.18);
+}
+
+.suggestion {
+  padding: 8px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.suggestionActive {
+  background: var(--hover);
+}
+
+.suggestionName {
+  display: block;
+}
+
+.suggestionMeta {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.emptyState {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  z-index: 10;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 14px;
 }
 
 .weatherInfo {
   text-align: center;
   font-family: monospace;
+}
+
+.todayBadge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: 12px;
+  vertical-align: middle;
 }
 
 .tabs {
@@ -27,20 +136,29 @@
 
 .tab {
   padding: 8px 16px;
-  border: none;
-  background: #5169e3;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--foreground);
   cursor: pointer;
   border-radius: 4px;
-  transition: background 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 }
 
 .tab:hover {
-  background: #e0e0e0;
+  background: var(--hover);
 }
 
 .active {
-  background: #007bff;
-  color: white;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+}
+
+/* Иначе `.tab:hover` перекрывает фон активного таба и белый текст становится невидимым. */
+.active:hover {
+  background: var(--accent-strong);
 }
 
 .retryBlock {
@@ -51,8 +169,8 @@
 .retryBtn {
   padding: 8px 24px;
   border: none;
-  background: #5169e3;
-  color: white;
+  background: var(--accent);
+  color: var(--accent-contrast);
   cursor: pointer;
   border-radius: 4px;
   margin-left: 8px;
@@ -60,24 +178,22 @@
 }
 
 .retryBtn:hover {
-  background: #007bff;
+  background: var(--accent-strong);
 }
 
-/* Заглушки загрузки: держат место элементов до прихода данных от API. */
-.skeletonSelect,
+.skeletonInput,
 .skeletonTab,
 .skeletonLine {
   display: block;
   border-radius: 4px;
-  background-color: #d9d9d9;
+  background-color: var(--skeleton);
   animation: skeletonPulse 1.2s ease-in-out infinite;
 }
 
-.skeletonSelect {
-  height: 32px;
+.skeletonInput {
+  height: 40px;
   width: 100%;
-  max-width: 300px;
-  margin: 0 auto 24px;
+  margin-bottom: 24px;
 }
 
 .skeletonWeather {
@@ -126,7 +242,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .skeletonSelect,
+  .skeletonInput,
   .skeletonTab,
   .skeletonLine {
     animation: none;

@@ -2,18 +2,18 @@ import { render, screen } from '@testing-library/react';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
 
 describe('LoadingSkeleton', () => {
-  test('renders a select-shaped placeholder for the loading city list', () => {
+  test('рисует заглушку поля ввода на всю ширину для списка городов', () => {
     const { container } = render(<LoadingSkeleton variant="cities" />);
 
     const placeholder = screen.getByRole('status', { name: 'Загрузка списка городов' });
 
-    expect(placeholder).toHaveClass('skeletonSelect');
-    // У заглушки списка нет содержимого — только место под `<select>`.
+    // У заглушки поля нет содержимого — только место под поле города.
     expect(placeholder.childElementCount).toBe(0);
-    expect(container.querySelector('.skeletonWeather')).toBeNull();
+    expect(container.querySelector('.skeletonTabs')).toBeNull();
+    expect(container.querySelector('.skeletonCard')).toBeNull();
   });
 
-  test('renders tab and card placeholders for the loading forecast', () => {
+  test('рисует заглушки табов и карточки для прогноза', () => {
     const { container } = render(<LoadingSkeleton variant="weather" />);
 
     const placeholder = screen.getByRole('status', { name: 'Загрузка прогноза' });
@@ -23,14 +23,19 @@ describe('LoadingSkeleton', () => {
     expect(container.querySelector('.skeletonCard')).not.toBeNull();
     expect(container.querySelectorAll('.skeletonTab')).toHaveLength(7);
     expect(container.querySelectorAll('.skeletonLine')).toHaveLength(5);
-    expect(container.querySelector('.skeletonSelect')).toBeNull();
   });
 
-  test('renders no loading text, only visual placeholders', () => {
+  test('не выводит текст загрузки — только визуальные заглушки', () => {
     render(<LoadingSkeleton variant="weather" />);
 
-    // Текст не выводится: состояние доступно только через имя роли.
     expect(screen.queryByText(/Загрузка/)).toBeNull();
     expect(screen.getByRole('status', { name: 'Загрузка прогноза' }).textContent).toBe('');
+  });
+
+  test('объявляет загрузку поля через роль status без текста', () => {
+    render(<LoadingSkeleton variant="cities" />);
+
+    expect(screen.getByRole('status', { name: 'Загрузка списка городов' }).textContent).toBe('');
+    expect(screen.queryByText(/Загрузка/)).toBeNull();
   });
 });

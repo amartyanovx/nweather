@@ -1,54 +1,85 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import WeatherTabs from '../src/components/WeatherTabs';
+import WeatherTabs from '@/components/WeatherTabs';
+import type { ForecastDay } from '@/types/weather';
+
+const day = (date: string, isToday = false): ForecastDay => ({
+  date,
+  maxTempC: 20,
+  minTempC: 10,
+  precipitationMm: 0,
+  pressureHpa: 1010,
+  humidityPct: 50,
+  windSpeedMs: 2,
+  condition: 'clear',
+  isDay: true,
+  isToday,
+});
+
+/** Неделя 9–15 ноября 2026: Пн→Вс. */
+const DAYS = [
+  '2026-11-09',
+  '2026-11-10',
+  '2026-11-11',
+  '2026-11-12',
+  '2026-11-13',
+  '2026-11-14',
+  '2026-11-15',
+].map((date, index) => day(date, index === 2));
+
+const LABELS = ['Пн 09.11', 'Вт 10.11', 'Ср 11.11', 'Чт 12.11', 'Пт 13.11', 'Сб 14.11', 'Вс 15.11'];
 
 describe('WeatherTabs component', () => {
-  const days = ['Понедельник', 'Вторник', 'Среда'];
+  test('рисует семь табов с метками из дат', () => {
+    render(<WeatherTabs days={DAYS} selectedIndex={0} onSelect={jest.fn()} />);
 
-  test('renders all tabs and handles click events', () => {
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs).toHaveLength(7);
+    expect(tabs.map((tab) => tab.textContent)).toEqual(LABELS);
+    expect(screen.getByRole('tablist')).toBeInTheDocument();
+  });
+
+  test('отдаёт индекс выбранного дня по клику', () => {
     const onSelect = jest.fn();
-    render(<WeatherTabs days={days} selectedIndex={0} onSelect={onSelect} />);
+    render(<WeatherTabs days={DAYS} selectedIndex={0} onSelect={onSelect} />);
 
-    // All buttons should be in the document
-    days.forEach((day) => {
-      expect(screen.getByText(day)).toBeInTheDocument();
-    });
+    fireEvent.click(screen.getByRole('tab', { name: 'Пт 13.11' }));
 
-    // The first button should have active class
-    const buttons = screen.getAllByRole('button');
-    expect(buttons).toHaveLength(days.length);
-    expect(buttons[0]).toHaveAttribute('class', 'tab active');
-
-    // Click the second tab
-    fireEvent.click(screen.getByText(days[1]));
-    expect(onSelect).toHaveBeenCalledWith(1);
+    expect(onSelect).toHaveBeenCalledWith(4);
   });
 
-  test('marks exactly one tab as active', () => {
-    render(<WeatherTabs days={days} selectedIndex={1} onSelect={jest.fn()} />);
+  test('помечает активным ровно один таб', () => {
+    render(<WeatherTabs days={DAYS} selectedIndex={2} onSelect={jest.fn()} />);
 
-    const buttons = screen.getAllByRole('button');
-    expect(buttons.filter((button) => button.classList.contains('active'))).toHaveLength(1);
-    expect(buttons[1]).toHaveClass('active');
-    expect(buttons[0]).not.toHaveClass('active');
-    expect(buttons[2]).not.toHaveClass('active');
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs.filter((tab) => tab.getAttribute('aria-selected') === 'true')).toHaveLength(1);
+    expect(tabs[2]).toHaveAttribute('aria-selected', 'true');
+    expect(tabs[2]).toHaveClass('active');
+    expect(tabs[0]).not.toHaveClass('active');
   });
 
-  test('gives inactive tabs the base class only', () => {
-    render(<WeatherTabs days={days} selectedIndex={0} onSelect={jest.fn()} />);
+  test('у неактивных табов только базовый класс', () => {
+    render(<WeatherTabs days={DAYS} selectedIndex={0} onSelect={jest.fn()} />);
 
-    const buttons = screen.getAllByRole('button');
+    const tabs = screen.getAllByRole('tab');
     // CSS-модуль замокан в jest.setup.ts, поэтому класс неактивного таба — ровно `tab`.
-    expect(buttons[1].getAttribute('class')?.trim()).toBe('tab');
-    expect(buttons[2].getAttribute('class')?.trim()).toBe('tab');
+    expect(tabs[1].getAttribute('class')?.trim()).toBe('tab');
+    expect(tabs[1]).toHaveAttribute('aria-selected', 'false');
   });
 
-  test('renders no active tab when selectedIndex is out of range', () => {
-    render(<WeatherTabs days={days} selectedIndex={5} onSelect={jest.fn()} />);
+  test('подсказывает полное название дня в title', () => {
+    render(<WeatherTabs days={DAYS} selectedIndex={0} onSelect={jest.fn()} />);
 
-    const buttons = screen.getAllByRole('button');
-    buttons.forEach((button) => {
-      expect(button).not.toHaveClass('active');
-      expect(button.getAttribute('class')?.trim()).toBe('tab');
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs[0]).toHaveAttribute('title', 'Понедельник');
+    expect(tabs[6]).toHaveAttribute('title', 'Воскресенье');
+  });
+
+  test('не выделяет ни один таб, если индекс вне диапазона', () => {
+    render(<WeatherTabs days={DAYS} selectedIndex={9} onSelect={jest.fn()} />);
+
+    screen.getAllByRole('tab').forEach((tab) => {
+      expect(tab).toHaveAttribute('aria-selected', 'false');
+      expect(tab.getAttribute('class')?.trim()).toBe('tab');
     });
   });
 });

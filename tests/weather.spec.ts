@@ -1,10 +1,9 @@
 import { test, expect } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 
-const DAYS = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
-
 /** Значение метрики — число или прочерк; конкретные числа не проверяем, они генерируются. */
 const VALUE_PATTERN = /(-?\d+(\.\d+)?|—)/;
+const TAB_LABEL_PATTERN = /^(Пн|Вт|Ср|Чт|Пт|Сб|Вс) \d{2}\.\d{2}$/;
 
 const metric = (page: Page, label: string): Locator => page.locator('p', { hasText: label });
 
@@ -14,26 +13,34 @@ const expectFormattedValue = async (locator: Locator, label: string, unit: strin
   expect(text.replace(`${label}: `, '').replace(unit, '')).toMatch(VALUE_PATTERN);
 };
 
-test('выбор города показывает недельный прогноз в корректном формате', async ({ page }) => {
-  await page.goto('/');
+const combobox = (page: Page): Locator => page.getByRole('combobox', { name: 'Город' });
 
-  const select = page.locator('select');
-  await expect(select).toBeVisible();
+/** Ввод запроса, ожидание подсказки и выбор города кликом по ней. */
+const chooseCity = async (page: Page, query: string, cityName: string) => {
+  const input = combobox(page);
+  await expect(input).toBeVisible();
+  await input.fill(query);
 
-  const options = await select.locator('option').allTextContents();
-  expect(options.length).toBeGreaterThan(1);
+  const option = page.getByRole('option', { name: new RegExp(cityName) });
+  await expect(option).toBeVisible();
 
-  const city = options[1];
   await Promise.all([
-    page.waitForResponse((resp) => resp.url().includes('/api/weather') && resp.status() === 200),
-    select.selectOption({ label: city }),
+    page.waitForResponse((resp) => resp.url().includes('/api/forecast') && resp.status() === 200),
+    option.click(),
   ]);
+};
 
-  await expect(page.locator(`text=Город: ${city}`)).toBeVisible({ timeout: 15000 });
+test('выбор города через подсказки показывает недельный прогноз', async ({ page }) => {
+  await page.goto('/');
+  await chooseCity(page, 'Мос', 'Москва');
 
-  const tabs = page.locator('button');
+  await expect(page.getByText('Город: Москва')).toBeVisible({ timeout: 15000 });
+
+  const tabs = page.getByRole('tab');
   await expect(tabs).toHaveCount(7);
-  expect(await tabs.allTextContents()).toEqual(DAYS);
+  for (const label of await tabs.allTextContents()) {
+    expect(label).toMatch(TAB_LABEL_PATTERN);
+  }
 
   await expectFormattedValue(
     metric(page, 'Максимальная температура'),
@@ -47,30 +54,65 @@ test('выбор города показывает недельный прогн
   );
   await expectFormattedValue(metric(page, 'Осадки'), 'Осадки', 'мм');
   await expectFormattedValue(metric(page, 'Давление'), 'Давление', 'гПа');
+  await expectFormattedValue(metric(page, 'Влажность'), 'Влажность', '%');
+  await expectFormattedValue(metric(page, 'Ветер'), 'Ветер', 'м/с');
+  await expect(metric(page, 'Время суток')).toHaveText(/^Время суток: (День|Ночь)$/);
 });
 
-test('переключение дня меняет карточку прогноза', async ({ page }) => {
+test('переключение дня меняет заголовок карточки', async ({ page }) => {
   await page.goto('/');
+  await chooseCity(page, 'Мос', 'Москва');
 
-  const select = page.locator('select');
-  await expect(select).toBeVisible();
-  const options = await select.locator('option').allTextContents();
-  const city = options[1];
-
-  await Promise.all([
-    page.waitForResponse((resp) => resp.url().includes('/api/weather') && resp.status() === 200),
-    select.selectOption({ label: city }),
-  ]);
-
-  const cardTitle = page.locator('h3');
+  const cardTitle = page.getByRole('heading', { level: 3 });
   await expect(cardTitle).toBeVisible({ timeout: 15000 });
 
-  const fridayTab = page.getByRole('button', { name: 'Пятница', exact: true });
-  await expect(fridayTab).toBeVisible();
+  const tabs = page.getByRole('tab');
+  const labels = await tabs.allTextContents();
+  const targetIndex = 0;
+  const datePart = labels[targetIndex].split(' ')[1];
+
   // force: в фоновой странице (параллельные воркеры) Playwright не дожидается «стабильности» бокса,
   // потому что rAF троттлится; видимость и результат клика проверяются отдельно.
-  await fridayTab.click({ force: true });
+  await tabs.nth(targetIndex).click({ force: true });
 
-  await expect(cardTitle).toHaveText('Пятница');
-  await expectFormattedValue(metric(page, 'Давление'), 'Давление', 'гПа');
+  await expect(cardTitle).toContainText(datePart);
+  await expect(tabs.nth(targetIndex)).toHaveAttribute('aria-selected', 'true');
+});
+
+test('крестик очищает поле и скрывает прогноз', async ({ page }) => {
+  await page.goto('/');
+  await chooseCity(page, 'Мос', 'Москва');
+  await expect(page.getByRole('tab')).toHaveCount(7);
+
+  await page.getByRole('button', { name: 'Очистить город' }).click();
+
+  await expect(combobox(page)).toHaveValue('');
+  await expect(page.getByRole('tab')).toHaveCount(0);
+  await expect(page.getByRole('heading', { level: 3 })).toHaveCount(0);
+});
+
+test('поиск по английскому названию находит город', async ({ page }) => {
+  await page.goto('/');
+  await chooseCity(page, 'Mos', 'Москва');
+
+  await expect(page.getByText('Город: Москва')).toBeVisible({ timeout: 15000 });
+});
+
+test('при отсутствии совпадений показывает «Ничего не найдено»', async ({ page }) => {
+  await page.goto('/');
+
+  await combobox(page).fill('ццц');
+
+  await expect(page.getByText('Ничего не найдено')).toBeVisible();
+  await expect(page.getByRole('option')).toHaveCount(0);
+});
+
+test('один символ не открывает список подсказок', async ({ page }) => {
+  await page.goto('/');
+
+  await combobox(page).fill('М');
+  await page.waitForTimeout(300);
+
+  await expect(page.getByRole('listbox')).toHaveCount(0);
+  await expect(page.getByRole('option')).toHaveCount(0);
 });

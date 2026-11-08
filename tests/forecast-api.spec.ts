@@ -132,26 +132,4 @@ test.describe('API прогноза', () => {
       message: 'Город не найден',
     });
   });
-
-  test('deprecated-адаптер /api/weather работает под текущий UI', async ({ request }) => {
-    const citiesResponse = await request.get('/api/weather');
-    expect(citiesResponse.status()).toBe(200);
-    const citiesBody = (await citiesResponse.json()) as { cities: string[] };
-    expect(citiesBody.cities).toHaveLength(100);
-
-    const cityResponse = await request.get('/api/weather?city=Москва');
-    expect(cityResponse.status()).toBe(200);
-    const cityBody = (await cityResponse.json()) as {
-      name: string;
-      daily: Array<{ day: string; maxTempC?: number | null }>;
-    };
-    expect(cityBody.name).toBe('Москва');
-    expect(cityBody.daily).toHaveLength(7);
-    expect(cityBody.daily[0].day).toBe('Понедельник');
-    expect(typeof cityBody.daily[0].maxTempC).toBe('number');
-
-    const unknownResponse = await request.get('/api/weather?city=Атлантида');
-    expect(unknownResponse.status()).toBe(404);
-    expect(await unknownResponse.text()).toBe('City not found');
-  });
 });

@@ -1,13 +1,5 @@
 import type { WeatherCondition } from '@/lib/constants';
 
-export interface WeatherDay {
-  day: string;
-  maxTempC?: number | null;
-  minTempC?: number | null;
-  precipitationMm?: number | null;
-  pressureHpa?: number | null;
-}
-
 export type { WeatherCondition };
 
 /** Один день прогноза; `isToday` считает сервер в таймзоне города. */

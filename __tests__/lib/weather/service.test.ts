@@ -7,13 +7,7 @@ import { db } from '@/lib/db';
 import { resetWeatherCache } from '@/lib/weather/cache';
 import * as generator from '@/lib/weather/generator';
 import { WeatherError } from '@/lib/weather/errors';
-import {
-  buildForecast,
-  findCityByName,
-  findCityBySlug,
-  getForecast,
-  listCities,
-} from '@/lib/weather/service';
+import { buildForecast, findCityBySlug, getForecast, listCities } from '@/lib/weather/service';
 
 const mockSelect = db.select as unknown as jest.Mock;
 
@@ -60,18 +54,12 @@ describe('weather service', () => {
     await expect(listCities()).resolves.toEqual([row]);
   });
 
-  test('findCityBySlug и findCityByName возвращают запись или undefined', async () => {
+  test('findCityBySlug возвращает запись или undefined', async () => {
     mockSelect.mockReturnValueOnce(selectChain([MOSCOW]) as never);
     await expect(findCityBySlug('moscow')).resolves.toEqual(MOSCOW);
 
     mockSelect.mockReturnValueOnce(selectChain([]) as never);
     await expect(findCityBySlug('atlantis')).resolves.toBeUndefined();
-
-    mockSelect.mockReturnValueOnce(selectChain([MOSCOW]) as never);
-    await expect(findCityByName('Москва')).resolves.toEqual(MOSCOW);
-
-    mockSelect.mockReturnValueOnce(selectChain([]) as never);
-    await expect(findCityByName('Атлантида')).resolves.toBeUndefined();
   });
 
   test('на неизвестный slug отвечает ошибкой CITY_NOT_FOUND', async () => {

@@ -41,16 +41,6 @@ export const findCityBySlug = async (slug: string): Promise<CityRecord | undefin
   return rows.at(0);
 };
 
-/** Поиск по русскому названию нужен только deprecated-адаптеру `/api/weather`. */
-export const findCityByName = async (name: string): Promise<CityRecord | undefined> => {
-  const rows = await db
-    .select(cityRecordColumns)
-    .from(cities)
-    .where(eq(cities.name, name))
-    .limit(1);
-  return rows.at(0);
-};
-
 /** Кэш → генерация → кэш: повторный запрос того же дня генератор не вызывает. */
 const resolveDay = (city: CityRecord, date: string, today: string): ForecastDay => {
   const cached = getCachedDay(city.slug, date);
