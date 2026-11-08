@@ -6,8 +6,13 @@
 на одном полном сценарии — выбор города → недельный прогноз → переключение дней, с Server Components по умолчанию и
 минимальным клиентским островом.
 
-Данные вымышленные (mock-seed, 7 городов × 7 дней); схема — `src/lib/schema.ts`, фактическое состояние — `progress.md`.
-Переход на реальный Weather API — в планах, см. `progress.md`.
+## Данные
+
+- Города реальные, 100 записей: фикстура `src/data/cities.json`, источник истины — таблица `cities` в SQLite
+  (`src/lib/schema.ts`). Других таблиц нет.
+- Прогноза нет ни в БД, ни у внешнего провайдера: он генерируется на каждый запрос и кэшируется в памяти процесса.
+- «Сегодня» и границы недели считает сервер в таймзоне города (`src/lib/weather/dates.ts`); клиентское время не
+  участвует.
 
 ## Границы
 
@@ -18,8 +23,9 @@
 ## Инварианты
 
 - Строгая типизация без `any`; Server Components по умолчанию.
-- Источник данных — SQLite `dev.db` через Drizzle; API отдаёт `WeatherDay[]` фиксированной длины (инвариант порядка
-  дней — `systemPatterns.md`).
+- Прогноз — `ForecastDay` (`src/types/weather.ts`): `minTempC < maxTempC`, `precipitationMm ≥ 0`, `humidityPct` в
+  `[0, 100]`, `pressureHpa` в `[950, 1050]`, `windSpeedMs` в `[0, 25]`; осадки бывают только у
+  `rain`/`snow`/`thunderstorm`, при `clear` их нет.
 - Отсутствующая метрика не подменяется нулём: в интерфейсе показывается `—`.
 
 ## Сценарий и UX-правила
@@ -33,5 +39,6 @@
 
 ## Точки входа
 
-Стек — `package.json`, пояснения — `techContext.md`; API — `src/app/api/weather/route.ts`; хуки — `src/hooks/`; границы
-Server/Client Components — `systemPatterns.md`.
+Стек — `package.json`, пояснения — `techContext.md`; API — `src/app/api/{cities,forecast}/route.ts` плюс deprecated
+адаптер `src/app/api/weather/route.ts`; хуки — `src/hooks/`; генерация и кэш — `src/lib/weather/`;
+границы Server/Client Components — `systemPatterns.md`.

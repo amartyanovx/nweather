@@ -1,27 +1,31 @@
 # Progress: nweather
 
+[16:15][08-11-26] Бэкенд переписан по `backend-plan.md`.
+
 ## Состояние
 
 - Каркас Next.js App Router, TypeScript strict, CSS Modules, alias `@/*`.
-- `GET /api/weather` читает `cities` и `daily_weather` из `dev.db` через Drizzle; 404/500 обработаны.
-- UI: select городов, недельные табы, карточка дня, skeleton-загрузка (`components/LoadingSkeleton.tsx`),
-  ошибки с повтором.
-- Unit-тесты — `__tests__/**` и `tests/WeatherTabs.test.tsx`; пороги покрытия — `jest.config.ts`.
-- E2E: один сценарий выбора города — `tests/weather.spec.ts`.
-- Не сделано: расширение E2E, Suspense boundaries, реальный Weather API вместо mock-данных.
-- Memory Bank в бюджете: 13 239 символов при лимите 15 000 (`wc -m memory-bank/*.md`); бюджет и правила — `index.md`.
+- БД: одна таблица `cities` — 100 реальных городов из `src/data/cities.json`; миграции — `./drizzle`, сид — `scripts/seed.ts`.
+- API: `/api/cities`, `/api/forecast` (неделя и день в таймзоне города) и deprecated `/api/weather` под текущий UI.
+- Прогноз генерируется по запросу и кэшируется в памяти — `src/lib/weather/` (generator, cache, dates, service, errors).
+- UI не менялся: select городов, табы, карточка дня, skeleton, ошибка с повтором.
+- Unit-тесты — `__tests__/**` и `tests/WeatherTabs.test.tsx`; E2E — `tests/weather.spec.ts`, `tests/forecast-api.spec.ts`.
+- Дефекты 1–3 закрыты: сид один и рабочий, `dev.db` пересоздаётся только явным `db:reset`, импорт `db.ts` больше не
+  создаёт таблицы.
+- Memory Bank в бюджете: 14 025 символов при лимите 15 000 (`wc -m memory-bank/*.md`); бюджет и правила — `index.md`.
 
 ## Тесты и мутации
 
 - `npm run mutate` мутирует прикладной код; что исключено и с какими порогами — `.stryker.config.js`.
-- Два выживших мутанта в `src/app/page.tsx` эквивалентны и не убиваются наблюдением: замена зависимостей
-  `useEffect(..., [])` (сравнение массива поэлементное) и `value={selectedCity ?? ''}` (в `<select>` без совпадающей
-  опции значение всё равно `''`).
+- Эквивалентные мутанты в `generator.ts`: замена `<` на `<=` в границах весов и в сравнении с нулём — различия только в
+  точках, недостижимых на практике (ровно граница весов, `minTempC === 0`).
+- Мутанты пустых наборов колонок в `service.ts` не ловятся: мок БД не читает аргументы `select`, форму ответа проверяют
+  E2E-спеки.
 - Ловушка `testMatch`: `tests/*.test.tsx` подхватывает Jest, а не Playwright — см. `techContext.md`.
 
-## Известные дефекты
+## Известные дефекты и ограничения
 
-1. `mocks/weatherMock.json` удалён в коммите 430242c, но `src/lib/seed.ts` и `seed.js` его читают — оба seed-скрипта
-   не работают; наполненная `dev.db` (7 городов, 49 записей) существует только как локальный файл.
-2. `node seed.js` удаляет `dev.db` до чтения mock-файла: один запуск безвозвратно уничтожает данные.
-3. `src/lib/seed.ts` не тестируется и не мутируется: `seed()` на уровне модуля, `Math.random`, `fs`, запись в `dev.db`.
+1. Deprecated-адаптер `/api/weather` и хуки `src/hooks/*` подлежат удалению в задаче переделки фронта: переход на
+   `/api/cities` и `/api/forecast`, slug вместо русских названий (`src/app/api/weather/route.ts`).
+2. Прогноз не детерминирован: день стабилен только в пределах процесса (кэш), после рестарта значения другие — ожидаемое
+   следствие решения из `systemPatterns.md`.

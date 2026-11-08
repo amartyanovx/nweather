@@ -1,47 +1,43 @@
 import { NextResponse } from 'next/server';
-import { eq } from 'drizzle-orm';
-import { db } from '@/lib/db';
-import { cities, dailyWeather } from '@/lib/schema';
 import { DAYS_OF_WEEK } from '@/lib/constants';
+import { buildForecast, findCityByName, listCities } from '@/lib/weather/service';
 import type { WeatherDay } from '@/types/weather';
 
+/**
+ * @deprecated Адаптер под текущий UI (`src/hooks/useWeather.ts`, `src/hooks/useCityWeeklyWeather.ts`).
+ * Удаляется в задаче переделки фронта вместе с переходом на `/api/cities` и `/api/forecast`.
+ * Тела ошибок остаются текстовыми: их ожидают тесты фронтенда, которые в этой задаче не меняются.
+ */
 export async function GET(request: Request) {
+  // Чтение `request.url` бросает сигнал прерывания пререндера, поэтому оно вне `try`.
+  const url = new URL(request.url);
+
   try {
-    const url = new URL(request.url);
     const cityName = url.searchParams.get('city');
 
     if (cityName) {
-      const cityRow = await db.select().from(cities).where(eq(cities.name, cityName)).limit(1);
+      const city = await findCityByName(cityName);
 
-      if (!cityRow.length) {
+      if (!city) {
         return new NextResponse('City not found', { status: 404 });
       }
 
-      const weekData = await db
-        .select()
-        .from(dailyWeather)
-        .where(eq(dailyWeather.cityId, cityRow[0].id))
-        .orderBy(dailyWeather.dayOfWeek);
+      const forecast = buildForecast(city);
+      const daily: WeatherDay[] = forecast.days.map((forecastDay, index) => ({
+        day: DAYS_OF_WEEK[index],
+        maxTempC: forecastDay.maxTempC,
+        minTempC: forecastDay.minTempC,
+        precipitationMm: forecastDay.precipitationMm,
+        pressureHpa: forecastDay.pressureHpa,
+      }));
 
-      const daily: WeatherDay[] = DAYS_OF_WEEK.map((day, idx) => {
-        const dayData = weekData.find((d) => d.dayOfWeek === idx);
-        return {
-          day,
-          maxTempC: dayData?.maxTempC ?? undefined,
-          minTempC: dayData?.minTempC ?? undefined,
-          precipitationMm: dayData?.precipitationMm ?? undefined,
-          pressureHpa: dayData?.pressureHpa ?? undefined,
-        };
-      });
-
-      return NextResponse.json({ name: cityRow[0].name, daily });
+      return NextResponse.json({ name: city.name, daily });
     }
 
-    const rows = await db.select().from(cities);
-    const cityNames = rows.map((r) => r.name);
-    return NextResponse.json({ cities: cityNames });
-  } catch (err) {
-    console.error('Failed to fetch weather data from DB', err);
+    const cities = await listCities();
+    return NextResponse.json({ cities: cities.map((city) => city.name) });
+  } catch (error) {
+    console.error('Failed to fetch weather data from DB', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
