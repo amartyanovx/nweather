@@ -7,15 +7,15 @@
 ## Неочевидные настройки
 
 - `next.config.ts` включает `cacheComponents`, `partialPrefetching`: Router ведёт себя не как классический — сверяйся с
-  `node_modules/next/dist/docs/`.
-- Миграции — `./drizzle`, не `./migrations` (последний в `.gitignore`); `dbCredentials` нужен только для `drizzle-kit migrate`.
+  `node_modules/next/dist/docs/`
+- Миграции — `./drizzle`, не `./migrations` (последний в `.gitignore`); `dbCredentials` нужен только для `drizzle-kit migrate`
 - Alias `@/*` живёт в `tsconfig.json` и в `moduleNameMapper` (`jest.config.ts`), но `@/types` там **нет** — runtime-значения
-  держим в `@/lib/constants`, из `@/types` импортируем только типы.
-- Jest шире Playwright по `testMatch`: E2E — только `tests/*.spec.ts`, иначе `.test.tsx` из `tests/` подхватит Jest.
+  держим в `@/lib/constants`, из `@/types` импортируем только типы
+- Jest шире Playwright по `testMatch`: E2E — только `tests/*.spec.ts`, иначе `.test.tsx` из `tests/` подхватит Jest
 - `testEnvironment` — Stryker-mixin ради `perTest` (комментарий в `jest.config.ts`); Node-окружение подключается
-  docblock-ом `@stryker-mutator/jest-runner/jest-env/node` в тестах API и модулей `src/lib`.
+  docblock-ом `@stryker-mutator/jest-runner/jest-env/node` в тестах API и модулей `src/lib`
 - `node scripts/seed.ts` печатает `MODULE_TYPELESS_PACKAGE_JSON`: в `package.json` нет `"type": "module"`, Node
-  определяет ESM по синтаксису. Это ожидаемо, конфиг не меняем.
+  определяет ESM по синтаксису. Это ожидаемо, конфиг не меняем
 
 ## API Endpoints
 
@@ -33,10 +33,10 @@
 ## Тестовое окружение
 
 - CSS-модули мокаются в `jest.setup.ts` фиксированным списком: новые классы (поиск, подсказки, `skeletonInput`) в нём
-  отсутствуют — тесты проверяют роли и тексты.
-- Тесты API мокают `@/lib/db` и `connection` из `next/server`; кэш прогноза — реальный, со `resetWeatherCache()`.
+  отсутствуют — тесты проверяют роли и тексты
+- Тесты API мокают `@/lib/db` и `connection` из `next/server`; кэш прогноза — реальный, со `resetWeatherCache()`
 - Эквивалентные мутанты зафиксированы: квантор `+` в `WORD_SEPARATORS` (`src/lib/cityQuery.ts`) — `splitWords`
   отбрасывает пустые строки; `<` → `<=` в весах и в сравнении с нулём (`src/lib/weather/generator.ts`) — различия
-  недостижимы.
-- `npm run e2e` требует наполненной базы (правила — `AGENTS.md`); `webServer` сам делает `build && start`.
-- Команды, лимиты и требования к проверкам — `AGENTS.md`.
+  недостижимы
+- `npm run e2e` требует наполненной базы (правила — `AGENTS.md`); `webServer` сам делает `build && start`
+- Команды, лимиты и требования к проверкам — `AGENTS.md`
