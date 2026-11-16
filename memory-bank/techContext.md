@@ -24,15 +24,15 @@
 
 ## Команды
 
-| Команда             | Назначение                                                                  |
-| ------------------- | --------------------------------------------------------------------------- |
-| `npm run dev`       | dev-сервер, порт 3000 — гаси после задачи                                   |
-| `npm run lint`      | oxlint                                                                      |
-| `npm run typecheck` | проверка типов (`tsc --noEmit`)                                             |
-| `npm test`          | Jest с покрытием; порог и маппинг модулей — `jest.config.ts`                |
-| `npm run e2e`       | Playwright; нужен готовый `dev.db`, `webServer` сам делает `build && start` |
-| `npm run mutate`    | Stryker, длительный прогон; пороги и globs — `.stryker.config.js`           |
-| `npm run build`     | production-сборка (`.next/`, native `better-sqlite3`)                       |
+| Команда             | Назначение                                                                                      |
+| ------------------- | ----------------------------------------------------------------------------------------------- |
+| `npm run dev`       | dev-сервер, порт 3000 — гаси после задачи                                                       |
+| `npm run lint`      | oxlint                                                                                          |
+| `npm run typecheck` | проверка типов (`tsc --noEmit`)                                                                 |
+| `npm test`          | Jest с покрытием; порог и маппинг модулей — `jest.config.ts`                                    |
+| `npm run e2e`       | Playwright; нужна наполненная база (`npm run db:seed`), `webServer` сам делает `build && start` |
+| `npm run mutate`    | Stryker, длительный прогон; пороги и globs — `.stryker.config.js`                               |
+| `npm run build`     | production-сборка (`.next/`, native `better-sqlite3`)                                           |
 
 - Точечное форматирование — `npx prettier --write <файлы>`, проверка — `npx prettier --check <файлы>`; `npm run format` и
   `format:check` берут весь репозиторий (LF зафиксирован в `.gitattributes`)

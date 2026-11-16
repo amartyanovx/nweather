@@ -10,4 +10,5 @@ target/
 .next/
 coverage/
 *.min.js
-*.map.
+*.map
+test-results/
