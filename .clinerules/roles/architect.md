@@ -1,4 +1,4 @@
-# Architect (Архитектор)
+# Architect
 
 Отвечает за технический анализ и проектирование. Привлекается в режимах Engineering и Investigation; в Direct не нужен
 
