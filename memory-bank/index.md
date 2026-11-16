@@ -11,7 +11,7 @@
 | techContext.md         | Стек, технические соглашения, команды, тесты, контракт API, ловушки |
 | systemPatterns.md      | Решения и причины, поток данных, ловушки БД                         |
 | local/activeContext.md | Снимок текущей сессии вне git                                       |
-| defects.md             | Дефекты и долги, которых нет в коде                                 |
+| defects.md             | Дефекты и долги, которых нет в коде и `git log`                    |
 
 ## Маршрутизация
 
@@ -32,7 +32,7 @@
 - Правишь `memory-bank/**` — подключай `maintenance.md` (ведение, бюджеты, проверка перед сдачей); пишешь чекпоинт
   `local/activeContext.md` — `activeContextRules.md` в конце каждой задачи (чекпоинт хранит всю сессию). Оба файла
   читаются по требованию и в бюджет задачи не входят
-- Новые правила ведения добавляй в `maintenance.md` или `activeContextRules.md`, а не в `index.md`, `AGENTS.md` и
+- Новые правила ведения memory bank добавляй в `maintenance.md` или `activeContextRules.md`, а не в `index.md`, `AGENTS.md` и
   `.clinerules/core.md`
 
 ## Источники истины (не переписывать сюда)
