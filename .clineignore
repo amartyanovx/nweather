@@ -4,3 +4,11 @@ dist/
 build/
 stryker-output/
 reports/
+.venv/
+vendor/
+target/
+.next/
+coverage/
+*.min.js
+*.map
+test-results/
