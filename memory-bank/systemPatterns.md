@@ -3,12 +3,18 @@
 ## Поток данных
 
 ```
-page.tsx (client island: выбор города и дня)
+app/page.tsx (client island: поиск и сегодняшний день)
 ├── useCities()       → lib/fetcher.ts → GET /api/cities
 ├── useCityForecast() → lib/fetcher.ts → GET /api/forecast?city=<slug>  (ключ null без города)
-└── CitySearch.tsx (client island) + WeatherTabs, WeatherCard, LoadingSkeleton
+└── CitySearch.tsx (client island) + WeatherCard, LoadingSkeleton
 
-Ввод → useDebouncedValue → searchCities (lib/cityQuery.ts); метки — lib/forecastFormat.ts; активный день — isToday
+app/city/[slug]/page.tsx (server: BackLink вне Suspense)
+└── Suspense → async CityContent (await params) → components/CityView.tsx (client island: выбор дня)
+    ├── useCityForecast(slug) — тот же ключ SWR, данные уже в кэше главной
+    └── WeatherWeek, LoadingSkeleton
+
+Ввод → useDebouncedValue → searchCities (lib/cityQuery.ts); метки — lib/forecastFormat.ts;
+«сегодня» — isToday из ответа сервера, фолбэк — первый день недели
 
 /api/cities    → service.listCities   → db → cities
 /api/forecast  → service.getForecast  → кэш → generator; город и «сегодня» — db + dates
@@ -21,8 +27,9 @@ AuthGate: sessionStorage → LoginForm | children
 ### 1. SWR, Server Components, skeleton
 
 `jsonFetcher<T>` (`src/lib/fetcher.ts`) — единственная точка fetch; SWR-хуки кэшируют и повторяют запрос (`mutate`), ключ
-`null` отключает загрузку. Клиентские острова — `page.tsx`, `CitySearch.tsx`, `ThemeToggle.tsx`, `WeatherTabs.tsx`,
-`AuthGate.tsx`, `LoginForm.tsx`.
+`null` отключает загрузку. Клиентские острова — `page.tsx`, `CityView.tsx`, `CitySearch.tsx`, `ThemeToggle.tsx`,
+`AuthGate.tsx`, `LoginForm.tsx`; `app/city/[slug]/page.tsx`, `BackLink` — серверные, `WeatherWeek` — презентационный
+компонент без состояния.
 
 ### 2. Прогноз генерируется, а не хранится
 
@@ -69,3 +76,18 @@ HMR в `next dev` может обнулять синглтон — это ожи
 захардкожены в `LoginForm` намеренно: это тестовый экран без серверной проверки, а не механизм безопасности. Счётчик
 неудач живёт в состоянии компонента и не персистится: после 3 ошибок форма блокируется до перезагрузки страницы.
 Значения ключа и число попыток — `projectbrief.md`.
+
+### 10. Страница города — отдельный маршрут, состояние — `<Activity>`
+
+Требование «страница города» и кнопки назад реализовано маршрутом `/city/[slug]` с deep link. «Назад» — ссылка на `/`,
+а не история браузера: с прямого deep link история вывела бы из приложения. Выбор города и дня на главной сохраняет
+`<Activity>` из `cacheComponents` (скрывает до 3 маршрутов), но это не гарантия: после вытеснения выбор теряется.
+URL/`searchParams` для сохранения выбора отклонены — нужен Suspense на главной и синхронизация `CitySearch` с query,
+сложность не оправдана требованием. Серверная страница не читает `params` на своём уровне: `params`-promise передаётся
+в async-компонента внутри `Suspense`, поэтому `BackLink` остаётся в общей оболочке маршрута (`partialPrefetching`).
+
+### 11. Полные данные города — в ответе прогноза
+
+`service.getForecast` уже читает запись города, поэтому `city` в `/api/forecast` расширен до всех полей `CityDTO` плюс
+`timezone`: страница города получает профиль и неделю одним запросом, а `/api/cities` остаётся лёгким для поиска.
+Отдельный `/api/cities/[slug]` отклонён: вторая ручка и второй запрос при том же объёме данных.

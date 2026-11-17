@@ -9,11 +9,10 @@ import styles from '@/styles/page.module.css';
 import type { ForecastDay } from '@/types/weather';
 
 interface Props {
-  cityName: string;
   day: ForecastDay;
 }
 
-export default function WeatherCard({ cityName, day }: Props) {
+export default function WeatherCard({ day }: Props) {
   const title = `${DAYS_OF_WEEK[weekdayIndexFromIso(day.date)]}, ${formatFullDate(day.date)}`;
 
   return (
@@ -22,7 +21,6 @@ export default function WeatherCard({ cityName, day }: Props) {
         {title}
         {day.isToday && <span className={styles.todayBadge}>Сегодня</span>}
       </h3>
-      <p>Город: {cityName}</p>
       <p>Условие: {CONDITION_LABELS[day.condition]}</p>
       <p>Максимальная температура: {formatMetric(day.maxTempC, '°C')}</p>
       <p>Минимальная температура: {formatMetric(day.minTempC, '°C')}</p>

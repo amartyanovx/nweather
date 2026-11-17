@@ -1,10 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import CitySearch from '@/components/CitySearch';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
 import WeatherCard from '@/components/WeatherCard';
-import WeatherTabs from '@/components/WeatherTabs';
 import { useCities } from '@/hooks/useCities';
 import { useCityForecast } from '@/hooks/useCityForecast';
 import styles from '@/styles/page.module.css';
@@ -13,7 +13,6 @@ import type { CityDTO } from '@/types/weather';
 export default function Home() {
   const { data: citiesData, error: citiesError, isLoading: citiesLoading } = useCities();
   const [selectedCity, setSelectedCity] = useState<CityDTO | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const {
     data: forecast,
@@ -24,25 +23,12 @@ export default function Home() {
 
   const cities = citiesData?.cities ?? [];
   const days = forecast?.days ?? [];
-  // День берётся из ответа сервера: ревалидация SWR не сбрасывает выбор пользователя.
-  const activeDay =
-    days.find((day) => day.date === selectedDate) ?? days.find((day) => day.isToday) ?? days[0];
-  const activeIndex = activeDay ? days.indexOf(activeDay) : -1;
+  const today = days.find((day) => day.isToday) ?? days[0];
 
-  const handleSelect = (city: CityDTO) => {
-    setSelectedCity(city);
-    setSelectedDate(null);
-  };
-
-  const handleClear = () => {
-    setSelectedCity(null);
-    setSelectedDate(null);
-  };
-
-  const handleSelectDay = (index: number) => {
-    const day = days[index];
-    if (day) setSelectedDate(day.date);
-  };
+  // Заголовок живёт по выбору пользователя, а не по ответу прогноза: он виден и во время загрузки,
+  // и при ошибке, чтобы переход на страницу города не зависел от состояния запроса.
+  const handleSelect = (city: CityDTO) => setSelectedCity(city);
+  const handleClear = () => setSelectedCity(null);
 
   return (
     <>
@@ -56,7 +42,14 @@ export default function Home() {
           onClear={handleClear}
         />
       )}
-      {forecastLoading && selectedCity !== null && <LoadingSkeleton variant="weather" />}
+      {selectedCity && (
+        <h2 className={styles.title}>
+          <Link className={styles.cityLink} href={`/city/${selectedCity.slug}`}>
+            {selectedCity.name}
+          </Link>
+        </h2>
+      )}
+      {selectedCity && forecastLoading && <LoadingSkeleton variant="today" />}
       {forecastError && (
         <p className={styles.retryBlock}>
           Не удалось загрузить погоду.{' '}
@@ -65,12 +58,7 @@ export default function Home() {
           </button>
         </p>
       )}
-      {selectedCity && activeDay && (
-        <>
-          <WeatherTabs days={days} selectedIndex={activeIndex} onSelect={handleSelectDay} />
-          <WeatherCard cityName={selectedCity.name} day={activeDay} />
-        </>
-      )}
+      {selectedCity && today && <WeatherCard day={today} />}
     </>
   );
 }

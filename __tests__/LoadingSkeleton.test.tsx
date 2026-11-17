@@ -9,20 +9,28 @@ describe('LoadingSkeleton', () => {
 
     // У заглушки поля нет содержимого — только место под поле города.
     expect(placeholder.childElementCount).toBe(0);
-    expect(container.querySelector('.skeletonTabs')).toBeNull();
-    expect(container.querySelector('.skeletonCard')).toBeNull();
+    expect(container.querySelectorAll('span')).toHaveLength(0);
   });
 
-  test('рисует заглушки табов и карточки для прогноза', () => {
+  test('рисует заглушки плашек недели для страницы города', () => {
     const { container } = render(<LoadingSkeleton variant="weather" />);
 
     const placeholder = screen.getByRole('status', { name: 'Загрузка прогноза' });
 
     expect(placeholder).toHaveClass('skeletonWeather');
-    expect(container.querySelector('.skeletonTabs')).not.toBeNull();
-    expect(container.querySelector('.skeletonCard')).not.toBeNull();
-    expect(container.querySelectorAll('.skeletonTab')).toHaveLength(7);
-    expect(container.querySelectorAll('.skeletonLine')).toHaveLength(5);
+    // CSS-модуль в тестах не содержит новых классов, поэтому считаем дочерние заглушки по тегам.
+    expect(container.querySelectorAll('span')).toHaveLength(7);
+    expect(container.querySelector('.skeletonCard')).toBeNull();
+  });
+
+  test('рисует только карточку для сегодняшнего прогноза', () => {
+    const { container } = render(<LoadingSkeleton variant="today" />);
+
+    const placeholder = screen.getByRole('status', { name: 'Загрузка прогноза' });
+
+    expect(placeholder).toHaveClass('skeletonWeather');
+    expect(container.querySelectorAll('span')).toHaveLength(5);
+    expect(container.querySelector('.skeletonWeek')).toBeNull();
   });
 
   test('не выводит текст загрузки — только визуальные заглушки', () => {

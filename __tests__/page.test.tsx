@@ -48,18 +48,17 @@ const DATES = [
   '2026-11-15',
 ];
 const DAYS = DATES.map((date, index) => day(date, index === TODAY_INDEX));
-const TAB_LABELS = [
-  'Пн 09.11',
-  'Вт 10.11',
-  'Ср 11.11',
-  'Чт 12.11',
-  'Пт 13.11',
-  'Сб 14.11',
-  'Вс 15.11',
-];
 
 const FORECAST: ForecastResponse = {
-  city: { slug: 'moscow', name: 'Москва', timezone: 'Europe/Moscow' },
+  city: {
+    slug: 'moscow',
+    name: 'Москва',
+    nameEn: 'Moscow',
+    country: 'Россия',
+    lat: 55.7558,
+    lon: 37.6173,
+    timezone: 'Europe/Moscow',
+  },
   weekStart: '2026-11-09',
   days: DAYS,
 };
@@ -96,7 +95,7 @@ const forecastResponse = ({
 
 const combobox = () => screen.getByRole('combobox', { name: 'Город' });
 const cardTitle = () => screen.getByRole('heading', { level: 3 });
-const tab = (label: string) => screen.getByRole('tab', { name: label });
+const cityLink = () => screen.getByRole('link', { name: 'Москва' });
 
 /** Выбор города как в браузере: ввод → дебаунс → клик по подсказке. */
 const selectCity = (query: string, optionName: RegExp) => {
@@ -122,8 +121,9 @@ describe('Home page', () => {
     render(<Home />);
 
     expect(combobox()).toBeInTheDocument();
+    expect(screen.queryByRole('link')).toBeNull();
     expect(screen.queryByRole('tablist')).toBeNull();
-    expect(screen.queryByRole('heading', { level: 3 })).toBeNull();
+    expect(screen.queryByRole('heading')).toBeNull();
     expect(mockUseCityForecast).toHaveBeenLastCalledWith(null);
   });
 
@@ -162,54 +162,44 @@ describe('Home page', () => {
     expect(mockUseCityForecast).toHaveBeenLastCalledWith('moscow');
   });
 
-  test('после выбора города показывает семь табов и карточку', () => {
+  test('после выбора города показывает ссылку на город и карточку на сегодня', () => {
     mockUseCityForecast.mockReturnValue(forecastResponse({ data: FORECAST }));
 
     render(<Home />);
     selectCity('Мос', /Москва/);
 
-    const tabs = screen.getAllByRole('tab');
-    expect(tabs).toHaveLength(7);
-    expect(tabs.map((item) => item.textContent)).toEqual(TAB_LABELS);
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Москва');
+    expect(cityLink()).toHaveAttribute('href', '/city/moscow');
     expect(cardTitle()).toHaveTextContent('Среда, 11.11.2026');
-    expect(screen.getByText('Город: Москва')).toBeInTheDocument();
+    expect(screen.getByText('Сегодня')).toBeInTheDocument();
+    expect(screen.queryByRole('tablist')).toBeNull();
   });
 
-  test('активным по умолчанию становится день с isToday из ответа сервера', () => {
-    mockUseCityForecast.mockReturnValue(forecastResponse({ data: FORECAST }));
+  test('без isToday показывает первый день недели', () => {
+    mockUseCityForecast.mockReturnValue(
+      forecastResponse({
+        data: { ...FORECAST, days: DAYS.map((item) => ({ ...item, isToday: false })) },
+      }),
+    );
 
     render(<Home />);
     selectCity('Мос', /Москва/);
 
-    expect(tab('Ср 11.11')).toHaveAttribute('aria-selected', 'true');
-    expect(tab('Пн 09.11')).toHaveAttribute('aria-selected', 'false');
-    expect(cardTitle()).toHaveTextContent('Среда, 11.11.2026');
+    expect(cardTitle()).toHaveTextContent('Понедельник, 09.11.2026');
   });
 
-  test('переключает день по клику на таб', () => {
-    mockUseCityForecast.mockReturnValue(forecastResponse({ data: FORECAST }));
+  test('заголовок города остаётся при ошибке прогноза', () => {
+    mockUseCityForecast.mockReturnValue(forecastResponse({ error: new Error('Ошибка 500') }));
 
     render(<Home />);
     selectCity('Мос', /Москва/);
-    fireEvent.click(tab('Пт 13.11'));
 
-    expect(cardTitle()).toHaveTextContent('Пятница, 13.11.2026');
-    expect(tab('Пт 13.11')).toHaveAttribute('aria-selected', 'true');
-    expect(tab('Ср 11.11')).toHaveAttribute('aria-selected', 'false');
+    expect(cityLink()).toHaveAttribute('href', '/city/moscow');
+    expect(screen.getByText(/Не удалось загрузить погоду\./)).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 3 })).toBeNull();
   });
 
-  test('сбрасывает выбранный день при смене города', () => {
-    mockUseCityForecast.mockReturnValue(forecastResponse({ data: FORECAST }));
-
-    render(<Home />);
-    selectCity('Мос', /Москва/);
-    fireEvent.click(tab('Пт 13.11'));
-    selectCity('Мон', /Монреаль/);
-
-    expect(cardTitle()).toHaveTextContent('Среда, 11.11.2026');
-  });
-
-  test('показывает заглушку прогноза только после выбора города', () => {
+  test('показывает заглушку сегодняшней карточки только после выбора города', () => {
     mockUseCityForecast.mockReturnValue(forecastResponse({ isLoading: true }));
 
     render(<Home />);
@@ -218,7 +208,8 @@ describe('Home page', () => {
     selectCity('Мос', /Москва/);
 
     const skeleton = screen.getByRole('status', { name: 'Загрузка прогноза' });
-    expect(skeleton.querySelectorAll('.skeletonTab')).toHaveLength(7);
+    // На главной показывается только карточка: семь заглушек плашек недели не рендерятся.
+    expect(skeleton.querySelectorAll('span')).toHaveLength(5);
   });
 
   test('показывает ошибку прогноза и повторяет запрос через mutate', () => {
@@ -246,7 +237,7 @@ describe('Home page', () => {
     expect(screen.queryByText(/Не удалось загрузить погоду\./)).toBeNull();
   });
 
-  test('очистка поля скрывает прогноз и сбрасывает город', () => {
+  test('очистка поля скрывает заголовок города и прогноз', () => {
     mockUseCityForecast.mockReturnValue(forecastResponse({ data: FORECAST }));
 
     render(<Home />);
@@ -254,7 +245,7 @@ describe('Home page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Очистить город' }));
 
     expect(mockUseCityForecast).toHaveBeenLastCalledWith(null);
-    expect(screen.queryByRole('tablist')).toBeNull();
-    expect(screen.queryByRole('heading', { level: 3 })).toBeNull();
+    expect(screen.queryByRole('link')).toBeNull();
+    expect(screen.queryByRole('heading')).toBeNull();
   });
 });

@@ -74,7 +74,7 @@ describe('AuthGate', () => {
     );
 
     await screen.findByRole('heading', { name: 'Вход' });
-    submitCredentials('admin', '12345');
+    submitCredentials('admin', '123456');
 
     expect(await screen.findByText('Приложение')).toBeInTheDocument();
     expect(sessionStorage.getItem(AUTH_STORAGE_KEY)).toBe('true');

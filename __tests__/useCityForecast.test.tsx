@@ -7,7 +7,15 @@ import type { ForecastResponse } from '@/types/weather';
 jest.mock('swr');
 
 const FORECAST: ForecastResponse = {
-  city: { slug: 'moscow', name: 'Москва', timezone: 'Europe/Moscow' },
+  city: {
+    slug: 'moscow',
+    name: 'Москва',
+    nameEn: 'Moscow',
+    country: 'Россия',
+    lat: 55.7558,
+    lon: 37.6173,
+    timezone: 'Europe/Moscow',
+  },
   weekStart: '2026-11-09',
   days: [],
 };
