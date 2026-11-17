@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
+import { authenticate } from './auth';
 
 /** Значение метрики — число или прочерк; конкретные числа не проверяем, они генерируются. */
 const VALUE_PATTERN = /(-?\d+(\.\d+)?|—)/;
@@ -14,6 +15,10 @@ const expectFormattedValue = async (locator: Locator, label: string, unit: strin
 };
 
 const combobox = (page: Page): Locator => page.getByRole('combobox', { name: 'Город' });
+
+test.beforeEach(async ({ page }) => {
+  await authenticate(page);
+});
 
 /** Ввод запроса, ожидание подсказки и выбор города кликом по ней. */
 const chooseCity = async (page: Page, query: string, cityName: string) => {

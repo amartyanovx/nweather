@@ -12,7 +12,8 @@ page.tsx (client island: выбор города и дня)
 
 /api/cities    → service.listCities   → db → cities
 /api/forecast  → service.getForecast  → кэш → generator; город и «сегодня» — db + dates
-app/layout.tsx → components/BaseContainer.tsx → components/Header.tsx
+app/layout.tsx → components/BaseContainer.tsx → components/Header.tsx, components/AuthGate.tsx
+AuthGate: sessionStorage → LoginForm | children
 ```
 
 ## Принятые решения
@@ -20,7 +21,8 @@ app/layout.tsx → components/BaseContainer.tsx → components/Header.tsx
 ### 1. SWR, Server Components, skeleton
 
 `jsonFetcher<T>` (`src/lib/fetcher.ts`) — единственная точка fetch; SWR-хуки кэшируют и повторяют запрос (`mutate`), ключ
-`null` отключает загрузку. Клиентские острова — `page.tsx`, `CitySearch.tsx`, `ThemeToggle.tsx`, `WeatherTabs.tsx`.
+`null` отключает загрузку. Клиентские острова — `page.tsx`, `CitySearch.tsx`, `ThemeToggle.tsx`, `WeatherTabs.tsx`,
+`AuthGate.tsx`, `LoginForm.tsx`.
 
 ### 2. Прогноз генерируется, а не хранится
 
@@ -58,3 +60,12 @@ HMR в `next dev` может обнулять синглтон — это ожи
 Светлая — дефолт в `:root`, тёмная (Monokai) — `:root[data-theme='dark']`; `prefers-color-scheme` отклонён: дефолт задан
 продуктом, не ОС. Выбор в `localStorage` применяет инлайн-скрипт в `<head>` до отрисовки (`useEffect` дал бы вспышку).
 Заливка акцента `#c2185b`, а не Monokai-розовый `#f92672`: на розовом текст не добирает 4.5:1.
+
+### 9. Авторизация — клиентский гейт на `sessionStorage`
+
+`AuthGate` в layout оборачивает `children`: сервер не читает `sessionStorage`, поэтому до монтирования гейт рендерит
+`null`, затем — форму входа или приложение. Отдельный `/login` с middleware отклонён: middleware и Server Components не
+видят `sessionStorage`, а клиентский редирект пришлось бы повторять на каждом маршруте. Креды (`admin`/`123456`)
+захардкожены в `LoginForm` намеренно: это тестовый экран без серверной проверки, а не механизм безопасности. Счётчик
+неудач живёт в состоянии компонента и не персистится: после 3 ошибок форма блокируется до перезагрузки страницы.
+Значения ключа и число попыток — `projectbrief.md`.
