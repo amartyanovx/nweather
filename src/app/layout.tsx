@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import AuthGate from '@/components/AuthGate';
 import BaseContainer from '@/components/BaseContainer';
 
 export const metadata: Metadata = {
@@ -20,7 +21,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
       <body>
-        <BaseContainer>{children}</BaseContainer>
+        <BaseContainer>
+          <AuthGate>{children}</AuthGate>
+        </BaseContainer>
       </body>
     </html>
   );

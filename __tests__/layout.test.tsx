@@ -17,13 +17,13 @@ describe('RootLayout', () => {
     expect(renderLayout(<span>Контент</span>)).toContain('<html lang="en">');
   });
 
-  test('рендерит детей внутри базового контейнера рядом с хедером', () => {
+  test('рендерит хедер и не показывает контент до клиентской проверки сессии', () => {
     const markup = renderLayout(<span data-testid="child">Контент</span>);
 
     expect(markup).toContain('<body><div class="container">');
     expect(markup).toContain('Nweather');
-    // Ребёнок — последний элемент контейнера, сразу за ним обёртка и body закрываются.
-    expect(markup).toMatch(/data-testid="child">Контент<\/span><\/div><\/body>/);
+    // sessionStorage доступен только в браузере, поэтому гейт отдаёт детей после проверки на клиенте.
+    expect(markup).not.toContain('data-testid="child"');
   });
 
   test('ставит тему из localStorage до первой отрисовки', () => {
