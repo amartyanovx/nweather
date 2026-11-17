@@ -21,7 +21,15 @@ const selectChain = (rows: Array<Record<string, unknown>>) => {
   return { from: () => chain };
 };
 
-const MOSCOW = { slug: 'moscow', name: 'Москва', timezone: 'Europe/Moscow' };
+const MOSCOW = {
+  slug: 'moscow',
+  name: 'Москва',
+  nameEn: 'Moscow',
+  country: 'Россия',
+  lat: 55.7558,
+  lon: 37.6173,
+  timezone: 'Europe/Moscow',
+};
 /** 11 марта 2026 — среда, полдень по Москве. */
 const WEDNESDAY_NOON_UTC = '2026-03-11T09:00:00.000Z';
 

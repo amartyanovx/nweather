@@ -17,27 +17,26 @@ const DAY: ForecastDay = {
 
 describe('WeatherCard', () => {
   test('показывает полное название дня и дату в заголовке', () => {
-    render(<WeatherCard cityName="Москва" day={DAY} />);
+    render(<WeatherCard day={DAY} />);
 
     expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent('Среда, 11.11.2026');
   });
 
   test('помечает сегодняшний день бейджем', () => {
-    render(<WeatherCard cityName="Москва" day={{ ...DAY, isToday: true }} />);
+    render(<WeatherCard day={{ ...DAY, isToday: true }} />);
 
     expect(screen.getByText('Сегодня')).toBeInTheDocument();
   });
 
   test('не показывает бейдж для другого дня', () => {
-    render(<WeatherCard cityName="Москва" day={DAY} />);
+    render(<WeatherCard day={DAY} />);
 
     expect(screen.queryByText('Сегодня')).toBeNull();
   });
 
   test('выводит метрики в едином формате', () => {
-    render(<WeatherCard cityName="Москва" day={DAY} />);
+    render(<WeatherCard day={DAY} />);
 
-    expect(screen.getByText('Город: Москва')).toBeInTheDocument();
     expect(screen.getByText('Условие: Дождь')).toBeInTheDocument();
     expect(screen.getByText('Максимальная температура: 24°C')).toBeInTheDocument();
     expect(screen.getByText('Минимальная температура: 15°C')).toBeInTheDocument();
@@ -48,10 +47,10 @@ describe('WeatherCard', () => {
   });
 
   test('показывает время суток', () => {
-    const { rerender } = render(<WeatherCard cityName="Москва" day={DAY} />);
+    const { rerender } = render(<WeatherCard day={DAY} />);
     expect(screen.getByText('Время суток: День')).toBeInTheDocument();
 
-    rerender(<WeatherCard cityName="Москва" day={{ ...DAY, isDay: false }} />);
+    rerender(<WeatherCard day={{ ...DAY, isDay: false }} />);
     expect(screen.getByText('Время суток: Ночь')).toBeInTheDocument();
   });
 
@@ -64,7 +63,7 @@ describe('WeatherCard', () => {
       precipitationMm: null,
     } as unknown as ForecastDay;
 
-    render(<WeatherCard cityName="Москва" day={dayWithoutMetrics} />);
+    render(<WeatherCard day={dayWithoutMetrics} />);
 
     expect(screen.getByText('Максимальная температура: —')).toBeInTheDocument();
     expect(screen.getByText('Минимальная температура: —')).toBeInTheDocument();

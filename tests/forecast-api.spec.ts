@@ -17,7 +17,15 @@ interface ForecastDayBody {
 }
 
 interface ForecastBody {
-  city: { slug: string; name: string; timezone: string };
+  city: {
+    slug: string;
+    name: string;
+    nameEn: string;
+    country: string;
+    lat: number;
+    lon: number;
+    timezone: string;
+  };
   weekStart: string;
   days: ForecastDayBody[];
 }
@@ -56,7 +64,22 @@ test.describe('API прогноза', () => {
     expect(response.status()).toBe(200);
     const body = (await response.json()) as ForecastBody;
 
-    expect(body.city).toEqual({ slug: 'moscow', name: 'Москва', timezone: 'Europe/Moscow' });
+    expect(body.city).toMatchObject({
+      slug: 'moscow',
+      name: 'Москва',
+      nameEn: 'Moscow',
+      country: 'Россия',
+      timezone: 'Europe/Moscow',
+    });
+    expect(Object.keys(body.city).sort()).toEqual([
+      'country',
+      'lat',
+      'lon',
+      'name',
+      'nameEn',
+      'slug',
+      'timezone',
+    ]);
     expect(body.weekStart).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(body.days).toHaveLength(7);
     expect(body.days[0].date).toBe(body.weekStart);

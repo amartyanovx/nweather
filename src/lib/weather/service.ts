@@ -5,14 +5,10 @@ import { getCachedDay, setCachedDay } from '@/lib/weather/cache';
 import { isoDateInZone, weekDates, weekStartFor } from '@/lib/weather/dates';
 import { WeatherError } from '@/lib/weather/errors';
 import { generateDay } from '@/lib/weather/generator';
-import type { CityDTO, ForecastDay, ForecastResponse } from '@/types/weather';
+import type { CityDTO, ForecastCity, ForecastDay, ForecastResponse } from '@/types/weather';
 
-/** Минимум полей города, нужный для прогноза и расчёта «сегодня». */
-export interface CityRecord {
-  slug: string;
-  name: string;
-  timezone: string;
-}
+/** Запись города для прогноза и экрана города: все поля справочника и часовой пояс. */
+export type CityRecord = ForecastCity;
 
 const cityDtoColumns = {
   slug: cities.slug,
@@ -24,8 +20,7 @@ const cityDtoColumns = {
 };
 
 const cityRecordColumns = {
-  slug: cities.slug,
-  name: cities.name,
+  ...cityDtoColumns,
   timezone: cities.timezone,
 };
 
@@ -58,7 +53,7 @@ export const buildForecast = (city: CityRecord, date?: string): ForecastResponse
   const dates = date ? [date] : weekDates(weekStart);
 
   return {
-    city: { slug: city.slug, name: city.name, timezone: city.timezone },
+    city,
     weekStart,
     days: dates.map((dayDate) => resolveDay(city, dayDate, today)),
   };

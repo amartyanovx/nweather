@@ -9,7 +9,11 @@
 
 - Server Components по умолчанию; `'use client'` — только для интерактивности и браузерных API, минимальным островом.
   Данные — по возможности на сервере в Server Components; Suspense — там, где он реально улучшает загрузку
-- Сущности Next.js — через `PageProps`, `LayoutProps`, `Metadata`
+- `params` динамического маршрута читаются не в самой `page`, а в async-компоненте внутри `<Suspense>` — иначе оболочка
+  маршрута зависела бы от URL (`partialPrefetching`); пример — `src/app/city/[slug]/page.tsx`
+- Сущности Next.js — через `PageProps`, `LayoutProps`, `Metadata`; исключение — page с dynamic params: локальный
+  `interface Props { params: Promise<...> }` (как `layout.tsx` без `LayoutProps`), потому что `PageProps<'/маршрут'>`
+  появляется только после `next dev`/`build`/`typegen`, а `npm run typecheck` их не запускает
 - Next.js-специфику сверяй по `node_modules/next/dist/docs/` (поиск по `node_modules` ограничен `.clineignore`)
 
 ## Неочевидные настройки
@@ -42,10 +46,13 @@
 
 Контракт — `src/types/weather.ts`, реализация — `src/app/api/*/route.ts`, правила дат — `src/lib/weather/dates.ts`.
 
-| Метод | Путь                                | Ответ                                                        |
-| ----- | ----------------------------------- | ------------------------------------------------------------ |
-| GET   | `/api/cities`                       | `{ cities: CityDTO[] }` (пустая БД — `{ cities: [] }`)       |
-| GET   | `/api/forecast?city=<slug>[&date=]` | `{ city, weekStart, days: ForecastDay[] }` — 7 дней или один |
+| Метод | Путь                                | Ответ                                                                      |
+| ----- | ----------------------------------- | -------------------------------------------------------------------------- |
+| GET   | `/api/cities`                       | `{ cities: CityDTO[] }` (пустая БД — `{ cities: [] }`)                     |
+| GET   | `/api/forecast?city=<slug>[&date=]` | `{ city: ForecastCity, weekStart, days: ForecastDay[] }` — 7 дней или один |
+
+`ForecastCity` (`src/types/weather.ts`) — все поля `CityDTO` плюс `timezone`; профиль для страницы города приходит тем
+же ответом, что и неделя. `/api/cities` остаётся без `timezone` и без `id`.
 
 Ошибки — JSON `{ error: { code, message } }` с русским сообщением: `400 INVALID_QUERY` (нет `city`, невалидный `date`),
 `404 CITY_NOT_FOUND`, `500 INTERNAL` (ошибка БД, логируется). Фронт тела ошибок не разбирает: показывает общий текст с
@@ -57,6 +64,9 @@
   наблюдаемое поведение. `.test.ts(x)` в `tests/` подхватывает Jest, Playwright его игнорирует — наборы не смешивай
 - E2E, которым нужен экран погоды, авторизуются хелпером `authenticate` из `tests/auth.ts` (init script ставит
   `sessionStorage`); `tests/auth.spec.ts` проверяет сам вход без хелпера
+- `CityView` получает `slug` пропом, поэтому его unit-тесты не мокают `next/navigation`; связка `params → slug` в
+  `src/app/city/[slug]/page.tsx` покрыта E2E. E2E-локаторы при включённом `<Activity>` — ролевые и со скоупом видимой
+  области: скрытые маршруты остаются в DOM
 - Покрывай граничные случаи, ошибки API, битый JSON, пустые ответы
 - CSS-модули мокаются в `jest.setup.ts` фиксированным списком: новые классы (поиск, подсказки, `skeletonInput`) в нём
   отсутствуют — тесты проверяют роли и тексты; модули проекта — по `@/*` через `jest.mock`
@@ -67,7 +77,9 @@
   проверяют — `typecheck` обязателен отдельно. Когда запускать — матрица в `.clinerules/core.md` §«Проверки»
 - Эквивалентные мутанты зафиксированы: квантор `+` в `WORD_SEPARATORS` (`src/lib/cityQuery.ts`) — `splitWords`
   отбрасывает пустые строки; `<` → `<=` в весах и в сравнении с нулём (`src/lib/weather/generator.ts`) — различия
-  недостижимы
+  недостижимы; в `src/components/CityView.tsx` — `?? []` (`days` — либо массив, либо `undefined`; при `undefined` экран
+  отдаёт `null` по `!city`); в `CityView.tsx`/`page.tsx` — `{' '}` → `{""}` (пробел между текстом и кнопкой — оформление,
+  не наблюдаемое поведение)
 - Правила кода и критерии приёмки — `AGENTS.md`
 
 ## Данные

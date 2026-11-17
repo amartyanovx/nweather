@@ -12,6 +12,17 @@ export const CONDITION_LABELS: Record<WeatherCondition, string> = {
   fog: 'Туман',
 };
 
+/** Короткие подписи для плашек недели: полные названия не помещаются в узкую колонку. */
+export const SHORT_CONDITION_LABELS: Record<WeatherCondition, string> = {
+  clear: 'Ясно',
+  'partly-cloudy': 'Перем. облачность',
+  cloudy: 'Облачно',
+  rain: 'Дождь',
+  snow: 'Снег',
+  thunderstorm: 'Гроза',
+  fog: 'Туман',
+};
+
 /**
  * Индекс дня недели (0 — понедельник). Дата разбирается как UTC-полночь, как `toTimestamp` в
  * `src/lib/weather/dates.ts`, поэтому метка не зависит от таймзоны браузера.
@@ -33,3 +44,7 @@ export const formatFullDate = (isoDate: string): string => {
 
 export const formatMetric = (value: number | null | undefined, unit: string): string =>
   value === null || value === undefined ? '—' : `${value}${unit}`;
+
+/** Координаты справочника — четыре знака после запятой, широта и долгота через запятую. */
+export const formatCoordinates = (lat: number, lon: number): string =>
+  `${lat.toFixed(4)}, ${lon.toFixed(4)}`;

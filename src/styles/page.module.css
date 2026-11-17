@@ -4,6 +4,63 @@
   margin-bottom: 16px;
 }
 
+.cityLink {
+  color: var(--foreground);
+  text-decoration: underline;
+}
+
+.cityLink:hover {
+  color: var(--accent-strong);
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  color: var(--foreground);
+  font-size: 14px;
+}
+
+.backLink:hover {
+  color: var(--accent-strong);
+}
+
+.backArrow {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+/* Лёгкий сдвиг стрелки: подсказка направления без изменения размера ссылки. */
+.backLink:hover .backArrow {
+  transform: translateX(-4px);
+}
+
+.cityInfo {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.cityName {
+  margin-bottom: 12px;
+  font-size: 24px;
+}
+
+/* Пары dt/dd идут в грид по очереди: подпись — первая колонка, значение — вторая. */
+.cityDetails {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  gap: 4px 12px;
+  justify-content: center;
+  font-family: monospace;
+  font-size: 14px;
+  text-align: left;
+}
+
+.cityDetails dt {
+  color: var(--muted);
+}
+
 .search {
   position: relative;
   width: 100%;
@@ -127,38 +184,63 @@
   vertical-align: middle;
 }
 
-.tabs {
-  display: flex;
+.week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 8px;
-  justify-content: center;
-  margin-bottom: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.tab {
-  padding: 8px 16px;
+.weekDay {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 8px;
   border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--foreground);
-  cursor: pointer;
-  border-radius: 4px;
-  transition:
-    background 0.2s,
-    border-color 0.2s;
+  border-radius: 12px;
+  /* Мягкий градиент между поверхностью и hover: на обоих концах контраст текста ≥ 4.5:1. */
+  background: linear-gradient(160deg, var(--surface) 0%, var(--hover) 100%);
+  font-family: monospace;
+  font-size: 11px;
+  line-height: 1.35;
+  text-align: center;
 }
 
-.tab:hover {
-  background: var(--hover);
-}
-
-.active {
-  background: var(--accent);
+/* Сегодняшняя плашка помечается атрибутом: выделение не зависит от CSS-класса и проверяется в тестах. */
+.weekDay[data-today='true'] {
   border-color: var(--accent);
-  color: var(--accent-contrast);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
-/* Иначе `.tab:hover` перекрывает фон активного таба и белый текст становится невидимым. */
-.active:hover {
-  background: var(--accent-strong);
+.weekDate {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.weekTodayBadge {
+  align-self: center;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 10px;
+}
+
+.weekCondition {
+  font-weight: bold;
+}
+
+.weekTemp {
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.weekMetric {
+  color: var(--muted);
 }
 
 .retryBlock {
@@ -182,7 +264,7 @@
 }
 
 .skeletonInput,
-.skeletonTab,
+.skeletonPlate,
 .skeletonLine {
   display: block;
   border-radius: 4px;
@@ -196,21 +278,15 @@
   margin-bottom: 24px;
 }
 
-.skeletonWeather {
-  max-width: 300px;
-  margin: 0 auto;
-}
-
-.skeletonTabs {
-  display: flex;
+.skeletonWeek {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 8px;
-  justify-content: center;
-  margin-bottom: 16px;
 }
 
-.skeletonTab {
-  width: 88px;
-  height: 34px;
+.skeletonPlate {
+  height: 180px;
+  border-radius: 12px;
 }
 
 .skeletonCard {
@@ -218,6 +294,8 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
+  max-width: 300px;
+  margin: 0 auto;
 }
 
 .skeletonLine {
@@ -242,8 +320,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .backArrow {
+    transition: none;
+  }
+
   .skeletonInput,
-  .skeletonTab,
+  .skeletonPlate,
   .skeletonLine {
     animation: none;
   }

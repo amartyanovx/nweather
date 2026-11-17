@@ -26,10 +26,8 @@ export interface CityDTO {
   lon: number;
 }
 
-/** Город в ответе `GET /api/forecast` — только то, что нужно клиенту прогноза. */
-export interface ForecastCity {
-  slug: string;
-  name: string;
+/** Город в ответе `GET /api/forecast` — все поля справочника и часовой пояс города. */
+export interface ForecastCity extends CityDTO {
   timezone: string;
 }
 

@@ -56,7 +56,7 @@ export default function CitySearch({ cities, selected, onSelect, onClear }: Prop
     setQuery(sanitizeCityInput(event.target.value));
     setActiveIndex(0);
     setIsOpen(true);
-    // Ввод после выбора сбрасывает город: прогноз и табы скрываются до нового выбора.
+    // Ввод после выбора сбрасывает город: прогноз скрывается до нового выбора.
     if (selected) onClear();
   };
 

@@ -13,7 +13,15 @@ import { resetWeatherCache } from '@/lib/weather/cache';
 
 const mockSelect = db.select as unknown as jest.Mock;
 
-const MOSCOW = { slug: 'moscow', name: 'Москва', timezone: 'Europe/Moscow' };
+const MOSCOW = {
+  slug: 'moscow',
+  name: 'Москва',
+  nameEn: 'Moscow',
+  country: 'Россия',
+  lat: 55.7558,
+  lon: 37.6173,
+  timezone: 'Europe/Moscow',
+};
 /** 11 марта 2026 — среда, полдень по Москве. */
 const WEDNESDAY_NOON_UTC = '2026-03-11T09:00:00.000Z';
 
@@ -61,6 +69,15 @@ describe('GET /api/forecast', () => {
 
     expect(response.status).toBe(200);
     expect(body.city).toEqual(MOSCOW);
+    expect(Object.keys(body.city).sort()).toEqual([
+      'country',
+      'lat',
+      'lon',
+      'name',
+      'nameEn',
+      'slug',
+      'timezone',
+    ]);
     expect(body.weekStart).toBe('2026-03-09');
     expect(body.days.map((day: { date: string }) => day.date)).toEqual(weekDates);
     expect(body.days[2].isToday).toBe(true);
