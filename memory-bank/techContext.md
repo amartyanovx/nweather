@@ -71,5 +71,5 @@
 ## Данные
 
 `dev.db` вне git: `npm run db:reset` пересоздаёт файл безвозвратно, seed и миграции меняют данные — политика разрешений в
-`.clinerules/core.md` §«Полномочия и конфигурация». Схема — `src/lib/schema.ts`, подключение — `src/lib/db.ts`, конфиг —
+`.clinerules/core.md` §«Полномочия». Схема — `src/lib/schema.ts`, подключение — `src/lib/db.ts`, конфиг —
 `drizzle.config.ts`, потребители — `GET /api/cities` и `GET /api/forecast`.
