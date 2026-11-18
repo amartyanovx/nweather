@@ -28,18 +28,36 @@
 
 ## Команды
 
-| Команда             | Назначение                                                                                      |
-| ------------------- | ----------------------------------------------------------------------------------------------- |
-| `npm run dev`       | dev-сервер, порт 3000 — гаси после задачи                                                       |
-| `npm run lint`      | oxlint                                                                                          |
-| `npm run typecheck` | проверка типов (`tsc --noEmit`)                                                                 |
-| `npm test`          | Jest с покрытием; порог и маппинг модулей — `jest.config.ts`                                    |
-| `npm run e2e`       | Playwright; нужна наполненная база (`npm run db:seed`), `webServer` сам делает `build && start` |
-| `npm run mutate`    | Stryker, длительный прогон; пороги и globs — `.stryker.config.js`                               |
-| `npm run build`     | production-сборка (`.next/`, native `better-sqlite3`)                                           |
+| Команда                | Назначение                                                                                             |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| `npm run dev`          | dev-сервер, порт 3000 — гаси после задачи                                                              |
+| `npm run lint`         | oxlint                                                                                                 |
+| `npm run typecheck`    | проверка типов (`tsc --noEmit`)                                                                        |
+| `npm test`             | Jest с покрытием; порог и маппинг модулей — `jest.config.ts`                                           |
+| `npm run e2e`          | Playwright; нужна наполненная база (`npm run db:seed`), `webServer` сам делает `build && start`        |
+| `npm run mutate`       | Stryker, длительный прогон; пороги и globs — `.stryker.config.js`                                      |
+| `npm run build`        | production-сборка (`.next/`, native `better-sqlite3`)                                                  |
+| `npm run quality-gate` | статический AI Quality Gate: артефакты, guard Harness/CI, lint, typecheck (`scripts/quality-gate.mts`) |
 
 - Точечное форматирование — `npx prettier --write <файлы>`, проверка — `npx prettier --check <файлы>`; `npm run format` и
   `format:check` берут весь репозиторий (LF зафиксирован в `.gitattributes`)
+- `npm run quality-gate` — первая стадия CI (`.github/workflows/ci.yml`), вторая — только `npm run build`; подмножество
+  стадий — `npm run quality-gate -- guard-integrity`. Guard сверяет изменения от `merge-base` с базой PR. Подтверждение
+  правки защищённых Harness/CI-файлов — repository variable `HARNESS_ACK_SHA` (меняет только владелец репозитория);
+  значение действует только для своего коммита, поэтому новый коммит требует нового значения и повторного прогона
+  (`gh run rerun`: установка переменной событий Actions не создаёт). Локально это сигнал, а не авторизация:
+  `QUALITY_GATE_HARNESS_ACK_SHA=$(git rev-parse HEAD) npm run quality-gate`; барьер дают переменная, required status check
+  и ревью diff. Асимметрия сознательная: ignored/untracked `.env*.local` допускается, tracked — блокируется; ignored
+  `.env`/`.env.production` блокируются. PR исполняет свою копию `ci.yml` и скрипта, поэтому защита harness — ревью diff и
+  required check, а не сам скрипт. Барьер включён ruleset `master` на default branch (не legacy branch protection):
+  required status checks «AI Quality Gate (static)» и «Build», плюс запрет deletion и force-push; обязательных ревью нет
+  (0 approvals), поэтому подтверждение harness держится на `HARNESS_ACK_SHA`. `SKIP` (нет базы) печатается как «не проверено»
+  и блокировкой не становится: exit code 0, барьер — ревью и required check. Ограничение: одно значение `HARNESS_ACK_SHA`
+  на репозиторий, поэтому параллельные PR с правкой harness конфликтуют; снятие — `--body ""`. CI — три стадии по
+  цепочке `needs`: «AI Quality Gate (static)» → `Tests` (`npm test`, включая регрессию gate
+  `__tests__/qualityGate.test.ts`) → `Build`; следующая стартует только при зелёной предыдущей. Lint/typecheck —
+  однократно в первой стадии, тесты — однократно во второй. `next build`
+  дополнительно проверяет типы по всему проекту — дублирование `tsc` в CI принято, проверку сборки не отключаем
 - Данные — `npm run db:generate`, `db:migrate`, `db:seed`, `db:reset` (необратимо, см. §«Данные»)
 
 ## API Endpoints
