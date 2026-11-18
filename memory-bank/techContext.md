@@ -50,10 +50,11 @@
   и ревью diff. Асимметрия сознательная: ignored/untracked `.env*.local` допускается, tracked — блокируется; ignored
   `.env`/`.env.production` блокируются. PR исполняет свою копию `ci.yml` и скрипта, поэтому защита harness — ревью diff и
   required check, а не сам скрипт. Вне репозитория нужны переменная и required status check «AI Quality Gate (static)» в
-  branch protection, иначе красный gate merge не блокирует. `SKIP` (нет базы) печатается как «не проверено» и успешной
-  проверкой не считается. Регрессия правил hygiene/guard — `__tests__/qualityGate.test.ts` (запускается `npm test`,
-  отдельного job'а тестов в CI нет). `next build` дополнительно проверяет типы по всему проекту — дублирование `tsc` в CI
-  принято, проверку сборки не отключаем
+  branch protection, иначе красный gate merge не блокирует. `SKIP` (нет базы) печатается как «не проверено» и блокировкой
+  не становится: exit code 0, барьер — ревью и required check. Ограничение: одно значение `HARNESS_ACK_SHA` на репозиторий,
+  поэтому параллельные PR с правкой harness конфликтуют; снятие — `--body ""`. Регрессия правил hygiene/guard —
+  `__tests__/qualityGate.test.ts` (запускается `npm test`, отдельного job'а тестов в CI нет). `next build` дополнительно
+  проверяет типы по всему проекту — дублирование `tsc` в CI принято, проверку сборки не отключаем
 - Данные — `npm run db:generate`, `db:migrate`, `db:seed`, `db:reset` (необратимо, см. §«Данные»)
 
 ## API Endpoints

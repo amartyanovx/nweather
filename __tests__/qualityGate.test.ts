@@ -26,7 +26,7 @@ type GateEnv = { readonly NODE_ENV: 'test' } & Record<string, string>;
 
 const tempDirs: string[] = [];
 
-const createSandbox = (): Sandbox => {
+const createSandbox = (envIgnore = true): Sandbox => {
   const dir = mkdtempSync(path.join(tmpdir(), 'quality-gate-'));
   const configDir = mkdtempSync(path.join(tmpdir(), 'quality-gate-cfg-'));
   tempDirs.push(dir, configDir);
@@ -57,7 +57,7 @@ const createSandbox = (): Sandbox => {
 
   const sandbox: Sandbox = { dir, summaryPath: path.join(configDir, 'summary.md'), env };
   gitIn(sandbox, 'init', '-q', '-b', 'master');
-  writeFileSync(path.join(dir, '.gitignore'), '.env*\n');
+  writeFileSync(path.join(dir, '.gitignore'), envIgnore ? '.env*\n' : 'node_modules/\n');
   writeFileSync(path.join(dir, 'README.md'), '# fixture\n');
   commitAll(sandbox, 'base');
   return sandbox;
@@ -159,6 +159,20 @@ describe('artifact-hygiene', () => {
     () => {
       const sandbox = createSandbox();
       writeFileSync(path.join(sandbox.dir, '.env.local'), 'TOKEN=1\n');
+
+      const { status, output } = runGate(sandbox, ['artifact-hygiene']);
+
+      expect(status).toBe(0);
+      expect(output).toContain('Quality Gate: PASS');
+    },
+    TIMEOUT_MS,
+  );
+
+  it(
+    'допускает untracked .env.local вне .gitignore',
+    () => {
+      const sandbox = createSandbox(false);
+      writeFileSync(path.join(sandbox.dir, '.env.development.local'), 'TOKEN=1\n');
 
       const { status, output } = runGate(sandbox, ['artifact-hygiene']);
 
