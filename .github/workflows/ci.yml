@@ -1,0 +1,59 @@
+name: CI
+
+# Только PR: guard сверяет изменения с базой PR, а пост-merge прогон на master дублировал бы
+# lint/typecheck и сборку. Ручной запуск — проверка ветки без guard (сборка и статические стадии).
+on:
+  pull_request:
+    branches: [master]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    name: AI Quality Gate (static)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Полная история: guard строит merge-base с базовым коммитом PR.
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Static quality gate
+        env:
+          QUALITY_GATE_BASE: ${{ github.event.pull_request.base.sha }}
+          # Метку ставит мейнтейнер: подтверждение изменений Harness/CI.
+          QUALITY_GATE_GUARD_ACK: ${{ contains(github.event.pull_request.labels.*.name, 'harness-change') && '1' || '0' }}
+        run: npm run quality-gate
+
+  build:
+    name: Build
+    needs: quality-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build

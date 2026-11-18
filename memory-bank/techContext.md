@@ -28,18 +28,26 @@
 
 ## Команды
 
-| Команда             | Назначение                                                                                      |
-| ------------------- | ----------------------------------------------------------------------------------------------- |
-| `npm run dev`       | dev-сервер, порт 3000 — гаси после задачи                                                       |
-| `npm run lint`      | oxlint                                                                                          |
-| `npm run typecheck` | проверка типов (`tsc --noEmit`)                                                                 |
-| `npm test`          | Jest с покрытием; порог и маппинг модулей — `jest.config.ts`                                    |
-| `npm run e2e`       | Playwright; нужна наполненная база (`npm run db:seed`), `webServer` сам делает `build && start` |
-| `npm run mutate`    | Stryker, длительный прогон; пороги и globs — `.stryker.config.js`                               |
-| `npm run build`     | production-сборка (`.next/`, native `better-sqlite3`)                                           |
+| Команда                | Назначение                                                                                             |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| `npm run dev`          | dev-сервер, порт 3000 — гаси после задачи                                                              |
+| `npm run lint`         | oxlint                                                                                                 |
+| `npm run typecheck`    | проверка типов (`tsc --noEmit`)                                                                        |
+| `npm test`             | Jest с покрытием; порог и маппинг модулей — `jest.config.ts`                                           |
+| `npm run e2e`          | Playwright; нужна наполненная база (`npm run db:seed`), `webServer` сам делает `build && start`        |
+| `npm run mutate`       | Stryker, длительный прогон; пороги и globs — `.stryker.config.js`                                      |
+| `npm run build`        | production-сборка (`.next/`, native `better-sqlite3`)                                                  |
+| `npm run quality-gate` | статический AI Quality Gate: артефакты, guard Harness/CI, lint, typecheck (`scripts/quality-gate.mts`) |
 
 - Точечное форматирование — `npx prettier --write <файлы>`, проверка — `npx prettier --check <файлы>`; `npm run format` и
   `format:check` берут весь репозиторий (LF зафиксирован в `.gitattributes`)
+- `npm run quality-gate` — первая стадия CI (`.github/workflows/ci.yml`), вторая — только `npm run build`; подмножество
+  стадий — `npm run quality-gate -- guard-integrity`. Guard сверяет изменения от `merge-base` с базой PR и требует
+  подтверждения при правке защищённых Harness/CI-файлов: метка PR `harness-change` (CI) или `QUALITY_GATE_GUARD_ACK=1`
+  (локально — сигнал, барьер дают метка, required status check и ревью diff). Прогон только на PR. Предусловия вне
+  репозитория: метку `harness-change` нужно создать заранее, а стадию «AI Quality Gate (static)» — сделать required
+  status check в branch protection, иначе красный gate merge не блокирует. `next build` дополнительно проверяет типы по
+  всему проекту — дублирование `tsc` в CI принято, проверку сборки не отключаем
 - Данные — `npm run db:generate`, `db:migrate`, `db:seed`, `db:reset` (необратимо, см. §«Данные»)
 
 ## API Endpoints
