@@ -5,7 +5,6 @@ name: CI
 on:
   pull_request:
     branches: [master]
-    types: [opened, synchronize, reopened, labeled, unlabeled]
   workflow_dispatch:
 
 permissions:
@@ -24,6 +23,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          # Голова PR, а не merge-коммит: подтверждение (HARNESS_ACK_SHA) привязано к SHA коммита,
+          # а merge-коммит нестабилен и его SHA не совпадёт со значением переменной.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           # Полная история: guard строит merge-base с базовым коммитом PR.
           fetch-depth: 0
       - name: Setup Node.js
@@ -36,8 +38,9 @@ jobs:
       - name: Static quality gate
         env:
           QUALITY_GATE_BASE: ${{ github.event.pull_request.base.sha }}
-          # Метку ставит мейнтейнер: подтверждение изменений Harness/CI.
-          QUALITY_GATE_GUARD_ACK: ${{ contains(github.event.pull_request.labels.*.name, 'harness-change') && '1' || '0' }}
+          # Подтверждение изменений Harness/CI: repository variable (меняет только владелец репозитория),
+          # действует лишь для своего коммита.
+          QUALITY_GATE_HARNESS_ACK_SHA: ${{ vars.HARNESS_ACK_SHA }}
         run: npm run quality-gate
 
   build:

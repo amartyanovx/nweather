@@ -42,12 +42,18 @@
 - Точечное форматирование — `npx prettier --write <файлы>`, проверка — `npx prettier --check <файлы>`; `npm run format` и
   `format:check` берут весь репозиторий (LF зафиксирован в `.gitattributes`)
 - `npm run quality-gate` — первая стадия CI (`.github/workflows/ci.yml`), вторая — только `npm run build`; подмножество
-  стадий — `npm run quality-gate -- guard-integrity`. Guard сверяет изменения от `merge-base` с базой PR и требует
-  подтверждения при правке защищённых Harness/CI-файлов: метка PR `harness-change` (CI) или `QUALITY_GATE_GUARD_ACK=1`
-  (локально — сигнал, барьер дают метка, required status check и ревью diff). Прогон только на PR. Предусловия вне
-  репозитория: метку `harness-change` нужно создать заранее, а стадию «AI Quality Gate (static)» — сделать required
-  status check в branch protection, иначе красный gate merge не блокирует. `next build` дополнительно проверяет типы по
-  всему проекту — дублирование `tsc` в CI принято, проверку сборки не отключаем
+  стадий — `npm run quality-gate -- guard-integrity`. Guard сверяет изменения от `merge-base` с базой PR. Подтверждение
+  правки защищённых Harness/CI-файлов — repository variable `HARNESS_ACK_SHA` (меняет только владелец репозитория);
+  значение действует только для своего коммита, поэтому новый коммит требует нового значения и повторного прогона
+  (`gh run rerun`: установка переменной событий Actions не создаёт). Локально это сигнал, а не авторизация:
+  `QUALITY_GATE_HARNESS_ACK_SHA=$(git rev-parse HEAD) npm run quality-gate`; барьер дают переменная, required status check
+  и ревью diff. Асимметрия сознательная: ignored/untracked `.env*.local` допускается, tracked — блокируется; ignored
+  `.env`/`.env.production` блокируются. PR исполняет свою копию `ci.yml` и скрипта, поэтому защита harness — ревью diff и
+  required check, а не сам скрипт. Вне репозитория нужны переменная и required status check «AI Quality Gate (static)» в
+  branch protection, иначе красный gate merge не блокирует. `SKIP` (нет базы) печатается как «не проверено» и успешной
+  проверкой не считается. Регрессия правил hygiene/guard — `__tests__/qualityGate.test.ts` (запускается `npm test`,
+  отдельного job'а тестов в CI нет). `next build` дополнительно проверяет типы по всему проекту — дублирование `tsc` в CI
+  принято, проверку сборки не отключаем
 - Данные — `npm run db:generate`, `db:migrate`, `db:seed`, `db:reset` (необратимо, см. §«Данные»)
 
 ## API Endpoints

@@ -10,6 +10,11 @@
  * (`node_modules/`, `.next/`, `coverage/`, `dev.db`, `next-env.d.ts`, `*.tsbuildinfo`, …) вне охвата.
  * Guard сверяет изменения Harness/CI от `merge-base` с базой PR; миграции `drizzle/**` — данные,
  * а не harness, поэтому защищёнными не считаются.
+ *
+ * Подтверждение изменений Harness/CI — repository variable `HARNESS_ACK_SHA` (в CI её передают как
+ * `QUALITY_GATE_HARNESS_ACK_SHA`): значение действует только для своего коммита, новый коммит требует
+ * нового подтверждения. Локальное значение — сигнал, а не авторизация.
+ * `SKIP` означает, что проверка не выполнялась, и в итоге печатается как «не проверено».
  */
 import { spawnSync } from 'node:child_process';
 import { appendFileSync } from 'node:fs';
@@ -69,12 +74,15 @@ const ARTIFACT_RULES: readonly ArtifactRule[] = [
   { pattern: /^cline_mcp_settings\.json$/, reason: 'настройки MCP: ключи и токены' },
 ];
 
+/** Источник файла: от него зависит применение allowlist локальных env-файлов. */
+type ArtifactSource = 'tracked' | 'untracked' | 'ignored';
+
 /** Легитимные образцы окружения: в них нет значений, поэтому имена разрешены. */
 const ARTIFACT_ALLOWLIST: readonly string[] = ['.env.example', '.env.sample', '.env.template'];
 
 /**
  * Локальные env-файлы (`.env.local`, `.env.development.local`, …): Next.js-соглашение и уже
- * `.gitignore`, в репозиторий они не попадают — блокировать ими каждый локальный прогон нельзя.
+ * `.gitignore`. Локально они ожидаемы (ignored/untracked), но в git попадать не должны.
  */
 const LOCAL_ENV_PATTERN = /^\.env(\.[a-z0-9-]+)*\.local$/;
 
@@ -168,9 +176,11 @@ const isBuildArtifact = (file: string): boolean => {
   return BUILD_ARTIFACT_SUFFIXES.some((suffix) => normalized.endsWith(suffix));
 };
 
-const matchArtifactRule = (file: string): ArtifactRule | null => {
+const matchArtifactRule = (file: string, source: ArtifactSource): ArtifactRule | null => {
   const name = basename(file);
-  if (ARTIFACT_ALLOWLIST.includes(name) || LOCAL_ENV_PATTERN.test(name)) return null;
+  if (ARTIFACT_ALLOWLIST.includes(name)) return null;
+  // Локальный env-файл допустим только вне git: tracked `.env*.local` утекает в репозиторий.
+  if (source !== 'tracked' && LOCAL_ENV_PATTERN.test(name)) return null;
   return ARTIFACT_RULES.find((rule) => rule.pattern.test(name)) ?? null;
 };
 
@@ -203,10 +213,10 @@ const runArtifactHygiene = (): StageResult => {
     };
   }
 
-  const collections: readonly { files: readonly string[]; label: string }[] = [
-    { files: tracked.files, label: 'tracked' },
-    { files: untracked.files, label: 'untracked' },
-    { files: ignored.files, label: 'ignored' },
+  const collections: readonly { files: readonly string[]; source: ArtifactSource }[] = [
+    { files: tracked.files, source: 'tracked' },
+    { files: untracked.files, source: 'untracked' },
+    { files: ignored.files, source: 'ignored' },
   ];
 
   const seen = new Set<string>();
@@ -214,10 +224,10 @@ const runArtifactHygiene = (): StageResult => {
   for (const collection of collections) {
     for (const file of collection.files) {
       if (isBuildArtifact(file) || seen.has(file)) continue;
-      const rule = matchArtifactRule(file);
+      const rule = matchArtifactRule(file, collection.source);
       if (rule === null) continue;
       seen.add(file);
-      violations.push(`${file} — ${rule.reason} (${collection.label})`);
+      violations.push(`${file} — ${rule.reason} (${collection.source})`);
     }
   }
 
@@ -341,11 +351,14 @@ const runGuardIntegrity = (): StageResult => {
   }
 
   const details = limitDetails(protectedChanges);
-  if (process.env.QUALITY_GATE_GUARD_ACK === '1') {
+  const head = runGit(['rev-parse', 'HEAD']).stdout.trim().toLowerCase();
+  const ackSha = (process.env.QUALITY_GATE_HARNESS_ACK_SHA ?? '').trim().toLowerCase();
+
+  if (ackSha.length > 0 && ackSha === head) {
     return {
       name,
       status: 'PASS',
-      reason: `изменения Harness/CI подтверждены (${protectedChanges.length})`,
+      reason: `изменения Harness/CI подтверждены для ${head.slice(0, 12)} (${protectedChanges.length})`,
       details,
     };
   }
@@ -355,10 +368,13 @@ const runGuardIntegrity = (): StageResult => {
     status: 'FAIL',
     reason: `изменены защищённые файлы Harness/CI (${protectedChanges.length})`,
     details: [
-      `база сравнения: ${base.slice(0, 12)}`,
+      `база сравнения: ${base.slice(0, 12)}, текущий HEAD: ${head.slice(0, 12)}`,
       ...details,
-      'Подтверждение: метка PR "harness-change" (CI) или QUALITY_GATE_GUARD_ACK=1 (локально).',
-      'Локальный ACK — сигнал; барьер дают метка, required status check и ревью diff.',
+      ackSha.length > 0
+        ? `подтверждение относится к ${ackSha.slice(0, 12)} — для этого коммита нужно новое значение.`
+        : 'подтверждения для этого коммита нет.',
+      'Источник подтверждения: repository variable HARNESS_ACK_SHA = SHA коммита (ставит владелец репозитория).',
+      'Локально значение — сигнал; барьер дают repository variable, required status check и ревью diff.',
     ],
   };
 };
@@ -399,18 +415,34 @@ const selectStages = (
   return { stages: STAGE_ORDER.filter((name) => args.includes(name)), unknown };
 };
 
+const skippedNote = (results: readonly StageResult[]): string => {
+  const names = results.filter((result) => result.status === 'SKIP').map((result) => result.name);
+  return names.length > 0 ? `не проверено: ${names.join(', ')}` : '';
+};
+
 const printResults = (results: readonly StageResult[]): number => {
   write('AI Quality Gate (static)');
   write('');
   for (const result of results) {
-    write(`[${result.status}] ${result.name} — ${result.reason}`);
+    const reason = result.status === 'SKIP' ? `не проверено: ${result.reason}` : result.reason;
+    write(`[${result.status}] ${result.name} — ${reason}`);
     for (const detail of result.details) write(`  - ${detail}`);
   }
+
   const failed = results.filter((result) => result.status === 'FAIL').length;
+  const notes = [skippedNote(results)];
+  if (results.length < STAGE_ORDER.length) {
+    notes.push(`запущено ${results.length} из ${STAGE_ORDER.length} стадий`);
+  }
+  const suffix = notes.filter((note) => note.length > 0).join('; ');
+
   write('');
-  write(
-    failed === 0 ? 'Quality Gate: PASS' : `Quality Gate: FAIL (${failed} из ${results.length})`,
-  );
+  if (failed > 0) {
+    write(`Quality Gate: FAIL (${failed} из ${results.length})`);
+    if (suffix.length > 0) write(suffix);
+  } else {
+    write(suffix.length > 0 ? `Quality Gate: PASS (${suffix})` : 'Quality Gate: PASS');
+  }
   return failed === 0 ? 0 : 1;
 };
 
@@ -437,6 +469,13 @@ const appendStepSummary = (results: readonly StageResult[]): void => {
       lines.push(`- **${stage.name}**: ${stage.reason}`);
       for (const detail of stage.details) lines.push(`  - ${detail}`);
     }
+    lines.push('');
+  }
+
+  const skipped = results.filter((result) => result.status === 'SKIP');
+  if (skipped.length > 0) {
+    lines.push('### Не проверено', '');
+    for (const stage of skipped) lines.push(`- **${stage.name}**: ${stage.reason}`);
     lines.push('');
   }
 
