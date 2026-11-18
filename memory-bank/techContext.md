@@ -25,6 +25,8 @@
   держим в `@/lib/constants`, из `@/types` импортируем только типы
 - `node scripts/seed.ts` печатает `MODULE_TYPELESS_PACKAGE_JSON`: в `package.json` нет `"type": "module"`, Node
   определяет ESM по синтаксису. Это ожидаемо, конфиг не меняем
+- `.prettierrc.json` переопределяет `trailingComma: none` для `**/*.jsonc`: VS Code не принимает хвостовые запятые в
+  `.jsonc`, а базовый `trailingComma: all` их добавлял
 
 ## Команды
 

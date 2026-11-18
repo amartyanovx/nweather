@@ -7,10 +7,10 @@
     "complexity-cyclomatic": "warn",
     "complexity-cognitive": "warn",
     "complexity-crap": "warn",
-    "complexity-file-lines": "warn",
+    "complexity-file-lines": "warn"
   },
   "audit": {
     // Блокируют только новые находки относительно базы; унаследованный долг не мешает.
-    "gate": "new-only",
-  },
+    "gate": "new-only"
+  }
 }
