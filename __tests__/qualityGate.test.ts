@@ -321,7 +321,7 @@ describe('guard-integrity', () => {
       expect(status).toBe(0);
       expect(output).toContain('[SKIP] guard-integrity — не проверено: база не передана событием');
       expect(output).toContain(
-        'Quality Gate: PASS (не проверено: guard-integrity; запущено 1 из 4 стадий)',
+        'Quality Gate: PASS (не проверено: guard-integrity; запущено 1 из 5 стадий)',
       );
       expect(readFileSync(sandbox.summaryPath, 'utf8')).toContain('### Не проверено');
     },
@@ -341,6 +341,42 @@ describe('guard-integrity', () => {
       expect(status).toBe(1);
       expect(output).toContain('[FAIL] guard-integrity');
       expect(output).toContain('отсутствует в истории');
+    },
+    TIMEOUT_MS,
+  );
+});
+
+describe('fallow-audit', () => {
+  it(
+    'в CI с недоступной базой падает, а не пропускает проверку',
+    () => {
+      const sandbox = createSandbox();
+
+      const { status, output } = runGate(sandbox, ['fallow-audit'], {
+        CI: '1',
+        QUALITY_GATE_BASE: 'f'.repeat(40),
+      });
+
+      expect(status).toBe(1);
+      expect(output).toContain('[FAIL] fallow-audit');
+      expect(output).toContain('отсутствует в истории');
+    },
+    TIMEOUT_MS,
+  );
+
+  it(
+    'в CI с нулевым SHA базы падает, а не пропускает проверку',
+    () => {
+      const sandbox = createSandbox();
+
+      const { status, output } = runGate(sandbox, ['fallow-audit'], {
+        CI: '1',
+        QUALITY_GATE_BASE: '0'.repeat(40),
+      });
+
+      expect(status).toBe(1);
+      expect(output).toContain('[FAIL] fallow-audit');
+      expect(output).toContain('нулевой SHA');
     },
     TIMEOUT_MS,
   );
