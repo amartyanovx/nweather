@@ -1,7 +1,7 @@
 name: CI
 
 # Только PR: guard сверяет изменения с базой PR, а пост-merge прогон на master дублировал бы
-# lint/typecheck и сборку. Ручной запуск — проверка ветки без guard (сборка и статические стадии).
+# lint/typecheck, тесты и сборку. Ручной запуск — проверка ветки без guard (сборка и статические стадии).
 on:
   pull_request:
     branches: [master]
@@ -42,14 +42,30 @@ jobs:
           # действует лишь для своего коммита.
           QUALITY_GATE_HARNESS_ACK_SHA: ${{ vars.HARNESS_ACK_SHA }}
         run: npm run quality-gate
-      # Регрессия самого gate (hygiene/guard): один прогон без coverage — порог покрытия относится
-      # к продуктовому коду и собирается `npm test`. Падение шага не даёт стартовать `Build`.
-      - name: Quality gate regression tests
-        run: npx jest __tests__/qualityGate.test.ts --coverage=false
 
+  # Стадия 2: полный набор тестов (включая регрессию самого gate). Падение блокирует Build.
+  tests:
+    name: Tests
+    needs: quality-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Tests
+        run: npm test
+
+  # Стадия 3: сборка. Запускается только после зелёных gate и тестов.
   build:
     name: Build
-    needs: quality-gate
+    needs: tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
