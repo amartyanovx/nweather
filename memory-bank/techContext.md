@@ -54,7 +54,8 @@
   (0 approvals), поэтому подтверждение harness держится на `HARNESS_ACK_SHA`. `SKIP` (нет базы) печатается как «не проверено»
   и блокировкой не становится: exit code 0, барьер — ревью и required check. Ограничение: одно значение `HARNESS_ACK_SHA`
   на репозиторий, поэтому параллельные PR с правкой harness конфликтуют; снятие — `--body ""`. Регрессия правил
-  hygiene/guard — `__tests__/qualityGate.test.ts` (запускается `npm test`, отдельного job'а тестов в CI нет). `next build`
+  hygiene/guard — `__tests__/qualityGate.test.ts`: шаг в job `quality-gate` до `Build`
+  (`npx jest __tests__/qualityGate.test.ts --coverage=false`; покрытие продуктового кода собирает `npm test`). `next build`
   дополнительно проверяет типы по всему проекту — дублирование `tsc` в CI принято, проверку сборки не отключаем
 - Данные — `npm run db:generate`, `db:migrate`, `db:seed`, `db:reset` (необратимо, см. §«Данные»)
 

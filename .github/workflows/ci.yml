@@ -42,6 +42,10 @@ jobs:
           # действует лишь для своего коммита.
           QUALITY_GATE_HARNESS_ACK_SHA: ${{ vars.HARNESS_ACK_SHA }}
         run: npm run quality-gate
+      # Регрессия самого gate (hygiene/guard): один прогон без coverage — порог покрытия относится
+      # к продуктовому коду и собирается `npm test`. Падение шага не даёт стартовать `Build`.
+      - name: Quality gate regression tests
+        run: npx jest __tests__/qualityGate.test.ts --coverage=false
 
   build:
     name: Build
