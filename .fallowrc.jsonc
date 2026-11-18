@@ -1,0 +1,16 @@
+{
+  // Ложные срабатывания: эти пакеты используются только из конфигов или через
+  // wildcard-плагины, а статический граф импортов такие ссылки не видит.
+  "ignoreDependencies": ["@babel/preset-react", "@stryker-mutator/typescript-checker"],
+  "rules": {
+    // Сложность и health пока информационные: показываем в отчёте, но не блокируем.
+    "complexity-cyclomatic": "warn",
+    "complexity-cognitive": "warn",
+    "complexity-crap": "warn",
+    "complexity-file-lines": "warn"
+  },
+  "audit": {
+    // Блокируют только новые находки относительно базы; унаследованный долг не мешает.
+    "gate": "new-only"
+  }
+}

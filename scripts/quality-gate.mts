@@ -1,5 +1,5 @@
 /**
- * AI Quality Gate — статические проверки шага 1 «Базовый Quality Gate».
+ * AI Quality Gate — статические проверки и Fallow audit по изменениям.
  *
  * Запуск: `npm run quality-gate` (все стадии) или `npm run quality-gate -- <стадии>` (подмножество).
  * Один файл без импортов проекта: Node запускает `.mts` без сборки (расширение снимает
@@ -14,12 +14,16 @@
  * Подтверждение изменений Harness/CI — repository variable `HARNESS_ACK_SHA` (в CI её передают как
  * `QUALITY_GATE_HARNESS_ACK_SHA`): значение действует только для своего коммита, новый коммит требует
  * нового подтверждения. Локальное значение — сигнал, а не авторизация.
+ *
+ * Стадия `fallow-audit` запускает `fallow audit --gate new-only` относительно merge-base с базой PR:
+ * новые нарушения блокируют, унаследованные — нет; ошибка определения базы — FAIL, а не SKIP.
+ *
  * `SKIP` означает, что проверка не выполнялась, и в итоге печатается как «не проверено».
  */
 import { spawnSync } from 'node:child_process';
 import { appendFileSync } from 'node:fs';
 
-type StageName = 'artifact-hygiene' | 'guard-integrity' | 'lint' | 'typecheck';
+type StageName = 'artifact-hygiene' | 'guard-integrity' | 'lint' | 'typecheck' | 'fallow-audit';
 type StageStatus = 'FAIL' | 'PASS' | 'SKIP';
 
 interface StageResult {
@@ -51,6 +55,7 @@ const STAGE_ORDER: readonly StageName[] = [
   'guard-integrity',
   'lint',
   'typecheck',
+  'fallow-audit',
 ];
 
 /** Ограничение на печать: массовый артефакт не должен раздувать лог и `GITHUB_STEP_SUMMARY`. */
@@ -110,6 +115,7 @@ const BUILD_ARTIFACT_SUFFIXES: readonly string[] = ['.tsbuildinfo'];
 /** Harness/CI: изменение этих путей требует подтверждения человеком. */
 const PROTECTED_FILES: readonly string[] = [
   '.clineignore',
+  '.fallowrc.jsonc',
   '.gitattributes',
   '.gitignore',
   '.gitmodules',
@@ -301,6 +307,55 @@ const resolveBase = (): BaseResolution => {
   };
 };
 
+/**
+ * База для `fallow audit`: возвращает merge-base или ошибку. В отличие от guard, ошибка здесь —
+ * это FAIL, а не SKIP: пропуск проверки по изменениям недопустим.
+ */
+const resolveAuditBase = (): { base: string | null; error: string | null } => {
+  const explicit = (process.env.QUALITY_GATE_BASE ?? '').trim();
+
+  if (explicit.length > 0) {
+    if (isZeroSha(explicit)) {
+      return {
+        base: null,
+        error: `QUALITY_GATE_BASE=${explicit} — нулевой SHA (первый push ветки): база не определена`,
+      };
+    }
+    if (!commitExists(explicit)) {
+      return {
+        base: null,
+        error: `QUALITY_GATE_BASE=${explicit} отсутствует в истории: нужен fetch базовой ветки`,
+      };
+    }
+    const mergeBase = runGit(['merge-base', explicit, 'HEAD']);
+    if (!mergeBase.ok || mergeBase.stdout.trim().length === 0) {
+      return {
+        base: null,
+        error: `не удалось вычислить merge-base с ${explicit}: ${mergeBase.error ?? 'нет общего предка'}`,
+      };
+    }
+    return { base: mergeBase.stdout.trim(), error: null };
+  }
+
+  // Локально и при workflow_dispatch базы из события нет: берём расхождение с веткой по умолчанию.
+  let lastError: string | null = null;
+  for (const candidate of ['origin/HEAD', 'origin/main', 'origin/master', 'master', 'main']) {
+    if (!commitExists(candidate)) continue;
+    const mergeBase = runGit(['merge-base', candidate, 'HEAD']);
+    if (mergeBase.ok && mergeBase.stdout.trim().length > 0) {
+      return { base: mergeBase.stdout.trim(), error: null };
+    }
+    lastError = `не удалось вычислить merge-base с ${candidate}: ${mergeBase.error ?? 'нет общего предка'}`;
+  }
+
+  return {
+    base: null,
+    error:
+      lastError ??
+      'нет базы сравнения: нет ни QUALITY_GATE_BASE, ни origin/HEAD, ни origin/main, ни master',
+  };
+};
+
 const isProtected = (file: string): boolean => {
   const normalized = normalizePath(file);
   if (PROTECTED_FILES.includes(normalized)) return true;
@@ -398,11 +453,54 @@ const runNpmScript = (name: StageName, script: string): StageResult => {
   return { name, status: 'FAIL', reason: `npm run ${script}: ${status}`, details: [] };
 };
 
+const runFallowAudit = (): StageResult => {
+  const name: StageName = 'fallow-audit';
+  const resolution = resolveAuditBase();
+  if (resolution.base === null) {
+    return {
+      name,
+      status: 'FAIL',
+      reason: 'не удалось определить базу для fallow audit',
+      details: [resolution.error ?? 'неизвестная ошибка'],
+    };
+  }
+
+  // new-only: блокируют только новые нарушения, унаследованный долг не мешает. База — merge-base.
+  const result = spawnSync(
+    `npx --no-install fallow audit --base ${resolution.base} --gate new-only`,
+    { shell: true, stdio: 'inherit' },
+  );
+  if (result.error) {
+    return {
+      name,
+      status: 'FAIL',
+      reason: 'не удалось запустить fallow audit',
+      details: [result.error.message],
+    };
+  }
+  if (result.status === 0) {
+    return {
+      name,
+      status: 'PASS',
+      reason: `новых блокирующих нарушений нет (база: ${resolution.base.slice(0, 12)})`,
+      details: [],
+    };
+  }
+  const status = result.status === null ? 'процесс прерван сигналом' : `exit code ${result.status}`;
+  return {
+    name,
+    status: 'FAIL',
+    reason: `fallow audit: ${status}`,
+    details: [`база сравнения: ${resolution.base.slice(0, 12)}`],
+  };
+};
+
 const STAGE_RUNNERS: Readonly<Record<StageName, () => StageResult>> = {
   'artifact-hygiene': runArtifactHygiene,
   'guard-integrity': runGuardIntegrity,
   lint: () => runNpmScript('lint', 'lint'),
   typecheck: () => runNpmScript('typecheck', 'typecheck'),
+  'fallow-audit': runFallowAudit,
 };
 
 const isStageName = (value: string): value is StageName =>

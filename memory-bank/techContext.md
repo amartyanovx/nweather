@@ -25,24 +25,27 @@
   держим в `@/lib/constants`, из `@/types` импортируем только типы
 - `node scripts/seed.ts` печатает `MODULE_TYPELESS_PACKAGE_JSON`: в `package.json` нет `"type": "module"`, Node
   определяет ESM по синтаксису. Это ожидаемо, конфиг не меняем
+- `.prettierrc.json` переопределяет `trailingComma: none` для `**/*.jsonc`: VS Code не принимает хвостовые запятые в
+  `.jsonc`, а базовый `trailingComma: all` их добавлял
 
 ## Команды
 
-| Команда                | Назначение                                                                                             |
-| ---------------------- | ------------------------------------------------------------------------------------------------------ |
-| `npm run dev`          | dev-сервер, порт 3000 — гаси после задачи                                                              |
-| `npm run lint`         | oxlint                                                                                                 |
-| `npm run typecheck`    | проверка типов (`tsc --noEmit`)                                                                        |
-| `npm test`             | Jest с покрытием; порог и маппинг модулей — `jest.config.ts`                                           |
-| `npm run e2e`          | Playwright; нужна наполненная база (`npm run db:seed`), `webServer` сам делает `build && start`        |
-| `npm run mutate`       | Stryker, длительный прогон; пороги и globs — `.stryker.config.js`                                      |
-| `npm run build`        | production-сборка (`.next/`, native `better-sqlite3`)                                                  |
-| `npm run quality-gate` | статический AI Quality Gate: артефакты, guard Harness/CI, lint, typecheck (`scripts/quality-gate.mts`) |
+| Команда                | Назначение                                                                                               |
+| ---------------------- | -------------------------------------------------------------------------------------------------------- |
+| `npm run dev`          | dev-сервер, порт 3000 — гаси после задачи                                                                |
+| `npm run lint`         | oxlint                                                                                                   |
+| `npm run typecheck`    | проверка типов (`tsc --noEmit`)                                                                          |
+| `npm test`             | Jest с покрытием; порог и маппинг модулей — `jest.config.ts`                                             |
+| `npm run e2e`          | Playwright; нужна наполненная база (`npm run db:seed`), `webServer` сам делает `build && start`          |
+| `npm run mutate`       | Stryker, длительный прогон; пороги и globs — `.stryker.config.js`                                        |
+| `npm run build`        | production-сборка (`.next/`, native `better-sqlite3`)                                                    |
+| `npm run quality-gate` | AI Quality Gate: артефакты, guard Harness/CI, lint, typecheck, fallow audit (`scripts/quality-gate.mts`) |
 
 - Точечное форматирование — `npx prettier --write <файлы>`, проверка — `npx prettier --check <файлы>`; `npm run format` и
   `format:check` берут весь репозиторий (LF зафиксирован в `.gitattributes`)
-- `npm run quality-gate` — первая стадия CI (`.github/workflows/ci.yml`), вторая — только `npm run build`; подмножество
-  стадий — `npm run quality-gate -- guard-integrity`. Guard сверяет изменения от `merge-base` с базой PR. Подтверждение
+- `npm run quality-gate` — первая стадия CI (`.github/workflows/ci.yml`), далее `Tests` и `Build`; подмножество стадий —
+  `npm run quality-gate -- <стадия>`. Стадии gate: `artifact-hygiene` → `guard-integrity` → `lint` → `typecheck` →
+  `fallow-audit`. Guard сверяет изменения от `merge-base` с базой PR. Подтверждение
   правки защищённых Harness/CI-файлов — repository variable `HARNESS_ACK_SHA` (меняет только владелец репозитория);
   значение действует только для своего коммита, поэтому новый коммит требует нового значения и повторного прогона
   (`gh run rerun`: установка переменной событий Actions не создаёт). Локально это сигнал, а не авторизация:
@@ -56,7 +59,9 @@
   на репозиторий, поэтому параллельные PR с правкой harness конфликтуют; снятие — `--body ""`. CI — три стадии по
   цепочке `needs`: «AI Quality Gate (static)» → `Tests` (`npm test`, включая регрессию gate
   `__tests__/qualityGate.test.ts`) → `Build`; следующая стартует только при зелёной предыдущей. Lint/typecheck —
-  однократно в первой стадии, тесты — однократно во второй. `next build`
+  однократно в первой стадии, тесты — однократно во второй. `fallow-audit` запускает `fallow audit --gate new-only` от
+  merge-base: блокируют только новые нарушения, унаследованный долг gate исключает; ошибка определения базы — FAIL, а не
+  SKIP. Конфиг `.fallowrc.jsonc` защищён guard'ом наравне со скриптом. `next build`
   дополнительно проверяет типы по всему проекту — дублирование `tsc` в CI принято, проверку сборки не отключаем
 - Данные — `npm run db:generate`, `db:migrate`, `db:seed`, `db:reset` (необратимо, см. §«Данные»)
 
