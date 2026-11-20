@@ -98,13 +98,13 @@
 - `testEnvironment` — Stryker-mixin ради `perTest` (комментарий в `jest.config.ts`); Node-окружение подключается
   docblock-ом `@stryker-mutator/jest-runner/jest-env/node` в тестах API и модулей `src/lib`
 - Мутации — `npx stryker run --mutate <модуль>`; выживших разбирай, эквивалентных фиксируй с обоснованием; типы мутанты не
-  проверяют — `typecheck` обязателен отдельно. Когда запускать — матрица в `AGENTS.md` §«Проверки»
+  проверяют — `typecheck` обязателен отдельно. Когда запускать — матрица в `harness/main-session.md` §«Проверки»
 - Эквивалентные мутанты зафиксированы: квантор `+` в `WORD_SEPARATORS` (`src/lib/cityQuery.ts`) — `splitWords`
   отбрасывает пустые строки; `<` → `<=` в весах и в сравнении с нулём (`src/lib/weather/generator.ts`) — различия
   недостижимы; в `src/components/CityView.tsx` — `?? []` (`days` — либо массив, либо `undefined`; при `undefined` экран
   отдаёт `null` по `!city`); в `CityView.tsx`/`page.tsx` — `{' '}` → `{""}` (пробел между текстом и кнопкой — оформление,
   не наблюдаемое поведение)
-- Правила кода и критерии приёмки — `AGENTS.md`
+- Правила кода — `AGENTS.md`, критерии приёмки — `harness/main-session.md`
 
 ## Данные
 
