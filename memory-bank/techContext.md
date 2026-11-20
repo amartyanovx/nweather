@@ -60,7 +60,8 @@
   и блокировкой не становится: exit code 0, барьер — ревью и required check. Ограничение: одно значение `HARNESS_ACK_SHA`
   на репозиторий, поэтому параллельные PR с правкой harness конфликтуют; снятие — `--body ""`. CI — три стадии по
   цепочке `needs`: «AI Quality Gate (static)» → `Tests` (`npm test`, включая регрессию gate
-  `__tests__/qualityGate.test.ts`) → `Build`; следующая стартует только при зелёной предыдущей. Lint/typecheck —
+  `__tests__/qualityGate.test.ts` и снимка `__tests__/reviewerSnapshot.test.ts`) → `Build`; следующая стартует только при
+  зелёной предыдущей. Lint/typecheck —
   однократно в первой стадии, тесты — однократно во второй. `fallow-audit` запускает `fallow audit --gate new-only` от
   merge-base: блокируют только новые нарушения, унаследованный долг gate исключает; ошибка определения базы — FAIL, а не
   SKIP. Конфиг `.fallowrc.jsonc` защищён guard'ом наравне со скриптом. `next build`

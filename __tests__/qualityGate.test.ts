@@ -197,6 +197,7 @@ describe('artifact-hygiene', () => {
     TIMEOUT_MS,
   );
 });
+
 describe('guard-integrity', () => {
   const branchWithHarnessChange = (): { sandbox: Sandbox; head: string } => {
     const sandbox = createSandbox();
