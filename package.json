@@ -19,7 +19,8 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,css,md}\"",
     "mutate": "stryker run",
     "stryker-ci": "stryker run --reporters=html,clear-text",
-    "quality-gate": "node scripts/quality-gate.mts"
+    "quality-gate": "node scripts/quality-gate.mts",
+    "reviewer:snapshot": "node scripts/reviewer-snapshot.mts"
   },
   "dependencies": {
     "@babel/preset-typescript": "^7.23.2",

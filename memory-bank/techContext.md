@@ -31,16 +31,17 @@
 
 ## Команды
 
-| Команда                | Назначение                                                                                               |
-| ---------------------- | -------------------------------------------------------------------------------------------------------- |
-| `npm run dev`          | dev-сервер, порт 3000 — гаси после задачи                                                                |
-| `npm run lint`         | oxlint                                                                                                   |
-| `npm run typecheck`    | проверка типов (`tsc --noEmit`)                                                                          |
-| `npm test`             | Jest с покрытием; порог и маппинг модулей — `jest.config.ts`                                             |
-| `npm run e2e`          | Playwright; нужна наполненная база (`npm run db:seed`), `webServer` сам делает `build && start`          |
-| `npm run mutate`       | Stryker, длительный прогон; пороги и globs — `.stryker.config.js`                                        |
-| `npm run build`        | production-сборка (`.next/`, native `better-sqlite3`)                                                    |
-| `npm run quality-gate` | AI Quality Gate: артефакты, guard Harness/CI, lint, typecheck, fallow audit (`scripts/quality-gate.mts`) |
+| Команда                     | Назначение                                                                                               |
+| --------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `npm run dev`               | dev-сервер, порт 3000 — гаси после задачи                                                                |
+| `npm run lint`              | oxlint                                                                                                   |
+| `npm run typecheck`         | проверка типов (`tsc --noEmit`)                                                                          |
+| `npm test`                  | Jest с покрытием; порог и маппинг модулей — `jest.config.ts`                                             |
+| `npm run e2e`               | Playwright; нужна наполненная база (`npm run db:seed`), `webServer` сам делает `build && start`          |
+| `npm run mutate`            | Stryker, длительный прогон; пороги и globs — `.stryker.config.js`                                        |
+| `npm run build`             | production-сборка (`.next/`, native `better-sqlite3`)                                                    |
+| `npm run quality-gate`      | AI Quality Gate: артефакты, guard Harness/CI, lint, typecheck, fallow audit (`scripts/quality-gate.mts`) |
+| `npm run reviewer:snapshot` | снимок tracked/untracked состояния для read-only контроля reviewer                                       |
 
 - Точечное форматирование — `npx prettier --write <файлы>`, проверка — `npx prettier --check <файлы>`; `npm run format` и
   `format:check` берут весь репозиторий (LF зафиксирован в `.gitattributes`)
