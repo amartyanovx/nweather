@@ -291,6 +291,23 @@ describe('guard-integrity', () => {
   );
 
   it(
+    'защищает изменения каталога .github',
+    () => {
+      const sandbox = createSandbox();
+      gitIn(sandbox, 'checkout', '-q', '-b', 'feature');
+      mkdirSync(path.join(sandbox.dir, '.github', 'workflows'), { recursive: true });
+      commitFiles(sandbox, { '.github/workflows/ci.yml': 'name: CI\n' }, 'ci');
+
+      const { status, output } = runGate(sandbox, ['guard-integrity']);
+
+      expect(status).toBe(1);
+      expect(output).toContain('изменены защищённые файлы Harness/CI (1)');
+      expect(output).toContain('.github/workflows/ci.yml');
+    },
+    TIMEOUT_MS,
+  );
+
+  it(
     'не блокирует ветку, отставшую от базы: чужие изменения harness не считаются своими',
     () => {
       const sandbox = createSandbox();
