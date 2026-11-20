@@ -14,7 +14,8 @@
 - Сущности Next.js — через `PageProps`, `LayoutProps`, `Metadata`; исключение — page с dynamic params: локальный
   `interface Props { params: Promise<...> }` (как `layout.tsx` без `LayoutProps`), потому что `PageProps<'/маршрут'>`
   появляется только после `next dev`/`build`/`typegen`, а `npm run typecheck` их не запускает
-- Next.js-специфику сверяй по `node_modules/next/dist/docs/` (поиск по `node_modules` ограничен `.clineignore`)
+- Next.js-специфику сверяй по `node_modules/next/dist/docs/` (поиск по `node_modules` в агенте ограничен — открывай
+  файлы точечно по известному пути)
 
 ## Неочевидные настройки
 
@@ -25,21 +26,22 @@
   держим в `@/lib/constants`, из `@/types` импортируем только типы
 - `node scripts/seed.ts` печатает `MODULE_TYPELESS_PACKAGE_JSON`: в `package.json` нет `"type": "module"`, Node
   определяет ESM по синтаксису. Это ожидаемо, конфиг не меняем
-- `.prettierrc.json` переопределяет `trailingComma: none` для `**/*.jsonc`: VS Code не принимает хвостовые запятые в
-  `.jsonc`, а базовый `trailingComma: all` их добавлял
+- `.prettierrc.json` переопределяет `trailingComma: none` для `**/*.jsonc`: `.jsonc` не допускает хвостовых запятых, а
+  базовый `trailingComma: all` их добавлял
 
 ## Команды
 
-| Команда                | Назначение                                                                                               |
-| ---------------------- | -------------------------------------------------------------------------------------------------------- |
-| `npm run dev`          | dev-сервер, порт 3000 — гаси после задачи                                                                |
-| `npm run lint`         | oxlint                                                                                                   |
-| `npm run typecheck`    | проверка типов (`tsc --noEmit`)                                                                          |
-| `npm test`             | Jest с покрытием; порог и маппинг модулей — `jest.config.ts`                                             |
-| `npm run e2e`          | Playwright; нужна наполненная база (`npm run db:seed`), `webServer` сам делает `build && start`          |
-| `npm run mutate`       | Stryker, длительный прогон; пороги и globs — `.stryker.config.js`                                        |
-| `npm run build`        | production-сборка (`.next/`, native `better-sqlite3`)                                                    |
-| `npm run quality-gate` | AI Quality Gate: артефакты, guard Harness/CI, lint, typecheck, fallow audit (`scripts/quality-gate.mts`) |
+| Команда                     | Назначение                                                                                               |
+| --------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `npm run dev`               | dev-сервер, порт 3000 — гаси после задачи                                                                |
+| `npm run lint`              | oxlint                                                                                                   |
+| `npm run typecheck`         | проверка типов (`tsc --noEmit`)                                                                          |
+| `npm test`                  | Jest с покрытием; порог и маппинг модулей — `jest.config.ts`                                             |
+| `npm run e2e`               | Playwright; нужна наполненная база (`npm run db:seed`), `webServer` сам делает `build && start`          |
+| `npm run mutate`            | Stryker, длительный прогон; пороги и globs — `.stryker.config.js`                                        |
+| `npm run build`             | production-сборка (`.next/`, native `better-sqlite3`)                                                    |
+| `npm run quality-gate`      | AI Quality Gate: артефакты, guard Harness/CI, lint, typecheck, fallow audit (`scripts/quality-gate.mts`) |
+| `npm run reviewer:snapshot` | снимок tracked/untracked состояния для read-only контроля reviewer                                       |
 
 - Точечное форматирование — `npx prettier --write <файлы>`, проверка — `npx prettier --check <файлы>`; `npm run format` и
   `format:check` берут весь репозиторий (LF зафиксирован в `.gitattributes`)
@@ -58,7 +60,8 @@
   и блокировкой не становится: exit code 0, барьер — ревью и required check. Ограничение: одно значение `HARNESS_ACK_SHA`
   на репозиторий, поэтому параллельные PR с правкой harness конфликтуют; снятие — `--body ""`. CI — три стадии по
   цепочке `needs`: «AI Quality Gate (static)» → `Tests` (`npm test`, включая регрессию gate
-  `__tests__/qualityGate.test.ts`) → `Build`; следующая стартует только при зелёной предыдущей. Lint/typecheck —
+  `__tests__/qualityGate.test.ts` и снимка `__tests__/reviewerSnapshot.test.ts`) → `Build`; следующая стартует только при
+  зелёной предыдущей. Lint/typecheck —
   однократно в первой стадии, тесты — однократно во второй. `fallow-audit` запускает `fallow audit --gate new-only` от
   merge-base: блокируют только новые нарушения, унаследованный долг gate исключает; ошибка определения базы — FAIL, а не
   SKIP. Конфиг `.fallowrc.jsonc` защищён guard'ом наравне со скриптом. `next build`
@@ -97,16 +100,16 @@
 - `testEnvironment` — Stryker-mixin ради `perTest` (комментарий в `jest.config.ts`); Node-окружение подключается
   docblock-ом `@stryker-mutator/jest-runner/jest-env/node` в тестах API и модулей `src/lib`
 - Мутации — `npx stryker run --mutate <модуль>`; выживших разбирай, эквивалентных фиксируй с обоснованием; типы мутанты не
-  проверяют — `typecheck` обязателен отдельно. Когда запускать — матрица в `.clinerules/core.md` §«Проверки»
+  проверяют — `typecheck` обязателен отдельно. Когда запускать — матрица в `harness/main-session.md` §«Проверки»
 - Эквивалентные мутанты зафиксированы: квантор `+` в `WORD_SEPARATORS` (`src/lib/cityQuery.ts`) — `splitWords`
   отбрасывает пустые строки; `<` → `<=` в весах и в сравнении с нулём (`src/lib/weather/generator.ts`) — различия
   недостижимы; в `src/components/CityView.tsx` — `?? []` (`days` — либо массив, либо `undefined`; при `undefined` экран
   отдаёт `null` по `!city`); в `CityView.tsx`/`page.tsx` — `{' '}` → `{""}` (пробел между текстом и кнопкой — оформление,
   не наблюдаемое поведение)
-- Правила кода и критерии приёмки — `AGENTS.md`
+- Правила кода — `AGENTS.md`, критерии приёмки — `harness/main-session.md`
 
 ## Данные
 
 `dev.db` вне git: `npm run db:reset` пересоздаёт файл безвозвратно, seed и миграции меняют данные — политика разрешений в
-`.clinerules/core.md` §«Полномочия». Схема — `src/lib/schema.ts`, подключение — `src/lib/db.ts`, конфиг —
+`AGENTS.md` §«Полномочия». Схема — `src/lib/schema.ts`, подключение — `src/lib/db.ts`, конфиг —
 `drizzle.config.ts`, потребители — `GET /api/cities` и `GET /api/forecast`.

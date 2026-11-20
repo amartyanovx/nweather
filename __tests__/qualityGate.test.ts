@@ -197,6 +197,7 @@ describe('artifact-hygiene', () => {
     TIMEOUT_MS,
   );
 });
+
 describe('guard-integrity', () => {
   const branchWithHarnessChange = (): { sandbox: Sandbox; head: string } => {
     const sandbox = createSandbox();
@@ -286,6 +287,74 @@ describe('guard-integrity', () => {
 
       expect(status).toBe(0);
       expect(output).toContain('защищённые файлы не изменены');
+    },
+    TIMEOUT_MS,
+  );
+
+  it(
+    'защищает изменения каталога .github',
+    () => {
+      const sandbox = createSandbox();
+      gitIn(sandbox, 'checkout', '-q', '-b', 'feature');
+      mkdirSync(path.join(sandbox.dir, '.github', 'workflows'), { recursive: true });
+      commitFiles(sandbox, { '.github/workflows/ci.yml': 'name: CI\n' }, 'ci');
+
+      const { status, output } = runGate(sandbox, ['guard-integrity']);
+
+      expect(status).toBe(1);
+      expect(output).toContain('изменены защищённые файлы Harness/CI (1)');
+      expect(output).toContain('.github/workflows/ci.yml');
+    },
+    TIMEOUT_MS,
+  );
+
+  it(
+    'защищает изменения каталога harness',
+    () => {
+      const sandbox = createSandbox();
+      gitIn(sandbox, 'checkout', '-q', '-b', 'feature');
+      mkdirSync(path.join(sandbox.dir, 'harness'), { recursive: true });
+      commitFiles(sandbox, { 'harness/main-session.md': '# rules\n' }, 'rules');
+
+      const { status, output } = runGate(sandbox, ['guard-integrity']);
+
+      expect(status).toBe(1);
+      expect(output).toContain('изменены защищённые файлы Harness/CI (1)');
+      expect(output).toContain('harness/main-session.md');
+    },
+    TIMEOUT_MS,
+  );
+
+  it(
+    'блокирует новый файл инструкций в .clinerules',
+    () => {
+      const sandbox = createSandbox();
+      gitIn(sandbox, 'checkout', '-q', '-b', 'feature');
+      mkdirSync(path.join(sandbox.dir, '.clinerules'), { recursive: true });
+      commitFiles(sandbox, { '.clinerules/core.md': '# rules\n' }, 'legacy rules');
+
+      const { status, output } = runGate(sandbox, ['guard-integrity']);
+
+      expect(status).toBe(1);
+      expect(output).toContain('изменены защищённые файлы Harness/CI (1)');
+      expect(output).toContain('.clinerules/core.md');
+    },
+    TIMEOUT_MS,
+  );
+
+  it(
+    'блокирует новый файл инструкций в .cline',
+    () => {
+      const sandbox = createSandbox();
+      gitIn(sandbox, 'checkout', '-q', '-b', 'feature');
+      mkdirSync(path.join(sandbox.dir, '.cline'), { recursive: true });
+      commitFiles(sandbox, { '.cline/instructions.md': '# rules\n' }, 'instrument rules');
+
+      const { status, output } = runGate(sandbox, ['guard-integrity']);
+
+      expect(status).toBe(1);
+      expect(output).toContain('изменены защищённые файлы Harness/CI (1)');
+      expect(output).toContain('.cline/instructions.md');
     },
     TIMEOUT_MS,
   );

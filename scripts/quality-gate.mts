@@ -136,11 +136,13 @@ const PROTECTED_FILES: readonly string[] = [
   'package.json',
   'playwright.config.ts',
   'scripts/quality-gate.mts',
+  'scripts/reviewer-snapshot.mts',
   '__tests__/qualityGate.test.ts',
+  '__tests__/reviewerSnapshot.test.ts',
   'tsconfig.json',
 ];
 
-const PROTECTED_DIRS: readonly string[] = ['.clinerules', '.github'];
+const PROTECTED_DIRS: readonly string[] = ['.cline', '.clinerules', '.github', 'harness'];
 
 const write = (line: string): void => {
   process.stdout.write(`${line}\n`);
