@@ -27,8 +27,8 @@ nweather — приложение погоды: Next.js 16 App Router + TypeScri
 
 - Файлы, пути, поиск и чтение — `docs/files-and-paths.md`
 - Оболочка, терминал, прогоны и git — `docs/terminal.md`
-- Механика запуска независимого ревью (Cline CLI) — `.clinerules/core.md` §«Как запустить reviewer»; роль и границы
-  reviewer — `.clinerules/reviewer.md`. `.clinerules` — совместимый слой, правила здесь не дублируются
+- Механика запуска независимого ревью — `.clinerules/core.md` §«Как запустить reviewer»; роль и границы reviewer —
+  `.clinerules/reviewer.md`. `.clinerules` — совместимый слой, правила здесь не дублируются
 - Знания о проекте — `memory-bank/index.md`; правила ведения банка — `memory-bank/maintenance.md`,
   `memory-bank/activeContextRules.md`
 
