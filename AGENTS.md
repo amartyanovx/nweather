@@ -25,10 +25,9 @@ nweather — приложение погоды: Next.js 16 App Router + TypeScri
 
 ## Роли и документы
 
-- Основная сессия: перед работой прочитай `harness/main-session.md` — процесс, проверки, приёмка, завершение и Memory
-  Bank. Reviewer эти правила не читает.
-- Reviewer: работает по `.clinerules/reviewer.md`; `harness/main-session.md` не читает и не применяет. Механика запуска —
-  `.clinerules/core.md` §«Как запустить reviewer»
+- Основная сессия: перед работой прочитай `harness/main-session.md` — процесс, проверки, приёмка, завершение,
+  Memory Bank и §«Как запустить reviewer». Reviewer эти правила не читает.
+- Reviewer: работает по `.clinerules/reviewer.md`; `harness/main-session.md` не читает и не применяет
 - Файлы, пути, поиск и чтение — `harness/files-and-paths.md`
 - Оболочка, терминал, прогоны и git — `harness/terminal.md`
 - Знания о проекте — `memory-bank/index.md`; правила ведения банка — `memory-bank/maintenance.md`,
