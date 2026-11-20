@@ -3,7 +3,7 @@
  *
  * Хеш покрывает HEAD, tracked/untracked файлы, staged/unstaged изменения и содержимое untracked-файлов.
  * Запуск до и после сессии reviewer: несовпадение означает, что проект изменился.
- * Ignored-файлы в снимок не входят.
+ * Ignored-данные не контролируются: ignored-пути целиком не входят (см. .gitignore).
  */
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';

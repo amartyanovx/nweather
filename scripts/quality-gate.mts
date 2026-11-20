@@ -142,7 +142,7 @@ const PROTECTED_FILES: readonly string[] = [
   'tsconfig.json',
 ];
 
-const PROTECTED_DIRS: readonly string[] = ['.github', 'harness'];
+const PROTECTED_DIRS: readonly string[] = ['.cline', '.clinerules', '.github', 'harness'];
 
 const write = (line: string): void => {
   process.stdout.write(`${line}\n`);
