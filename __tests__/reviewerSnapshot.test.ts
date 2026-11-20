@@ -51,6 +51,7 @@ const createSandbox = (): Sandbox => {
 
   const sandbox: Sandbox = { dir, env };
   gitIn(sandbox, 'init', '-q', '-b', 'master');
+  writeFileSync(path.join(dir, '.gitignore'), 'ignored.txt\n');
   writeFileSync(path.join(dir, 'README.md'), '# base\n');
   gitIn(sandbox, 'add', '-A');
   gitIn(sandbox, 'commit', '-q', '-m', 'base');
@@ -91,12 +92,43 @@ describe('reviewer-snapshot', () => {
   );
 
   it(
+    'не меняет снимок при изменении ignored-файла',
+    () => {
+      const sandbox = createSandbox();
+      const before = snapshot(sandbox).output;
+
+      writeFileSync(path.join(sandbox.dir, 'ignored.txt'), 'one\n');
+      const added = snapshot(sandbox).output;
+      writeFileSync(path.join(sandbox.dir, 'ignored.txt'), 'two\n');
+      const edited = snapshot(sandbox).output;
+
+      expect(added).toBe(before);
+      expect(edited).toBe(before);
+    },
+    TIMEOUT_MS,
+  );
+
+  it(
     'замечает изменение tracked-файла',
     () => {
       const sandbox = createSandbox();
       const before = snapshot(sandbox).output;
 
       writeFileSync(path.join(sandbox.dir, 'README.md'), '# changed\n');
+      const after = snapshot(sandbox).output;
+
+      expect(after).not.toBe(before);
+    },
+    TIMEOUT_MS,
+  );
+
+  it(
+    'замечает удаление tracked-файла',
+    () => {
+      const sandbox = createSandbox();
+      const before = snapshot(sandbox).output;
+
+      rmSync(path.join(sandbox.dir, 'README.md'));
       const after = snapshot(sandbox).output;
 
       expect(after).not.toBe(before);
@@ -120,6 +152,22 @@ describe('reviewer-snapshot', () => {
   );
 
   it(
+    'замечает новый коммит',
+    () => {
+      const sandbox = createSandbox();
+      const before = snapshot(sandbox).output;
+
+      writeFileSync(path.join(sandbox.dir, 'README.md'), '# committed\n');
+      gitIn(sandbox, 'add', '-A');
+      gitIn(sandbox, 'commit', '-q', '-m', 'next');
+      const after = snapshot(sandbox).output;
+
+      expect(after).not.toBe(before);
+    },
+    TIMEOUT_MS,
+  );
+
+  it(
     'замечает добавление и изменение untracked-файла',
     () => {
       const sandbox = createSandbox();
@@ -130,9 +178,12 @@ describe('reviewer-snapshot', () => {
       const added = snapshot(sandbox).output;
       writeFileSync(path.join(sandbox.dir, 'notes', 'draft.txt'), 'two\n');
       const edited = snapshot(sandbox).output;
+      rmSync(path.join(sandbox.dir, 'notes', 'draft.txt'));
+      const removed = snapshot(sandbox).output;
 
       expect(added).not.toBe(before);
       expect(edited).not.toBe(added);
+      expect(removed).toBe(before);
     },
     TIMEOUT_MS,
   );
