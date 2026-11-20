@@ -136,6 +136,7 @@ const PROTECTED_FILES: readonly string[] = [
   'package.json',
   'playwright.config.ts',
   'scripts/quality-gate.mts',
+  'scripts/reviewer-snapshot.mts',
   '__tests__/qualityGate.test.ts',
   'tsconfig.json',
 ];

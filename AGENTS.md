@@ -10,8 +10,12 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # nweather — ограничения Harness
 
-Здесь правила, обязательные для любого агента: основной сессии и reviewer. Процесс, проверки, приёмка и завершение
-основной сессии — в `harness/main-session.md`; reviewer `harness/main-session.md` не читает и не применяет.
+Здесь правила, обязательные для любого агента: основной сессии и reviewer.
+
+## Перед задачей
+
+- Основная сессия: прочитай `harness/main-session.md` целиком до начала работы; без этого задачу не начинай.
+- Reviewer: работай по `harness/reviewer.md`; `harness/main-session.md` не читай и не применяй.
 
 ## Обзор проекта
 
@@ -23,11 +27,8 @@ nweather — приложение погоды: Next.js 16 App Router + TypeScri
 Блок `nextjs-agent-rules` генерируется Next.js — не изменяй его вручную. Этот файл и другие инструкции изменяются только
 по правилам полномочий из §«Полномочия».
 
-## Роли и документы
+## Документы
 
-- Основная сессия: перед работой прочитай `harness/main-session.md` — процесс, проверки, приёмка, завершение,
-  Memory Bank и §«Как запустить reviewer». Reviewer эти правила не читает.
-- Reviewer: работает по `harness/reviewer.md`; `harness/main-session.md` не читает и не применяет
 - Файлы, пути, поиск и чтение — `harness/files-and-paths.md`
 - Оболочка, терминал, прогоны и git — `harness/terminal.md`
 - Знания о проекте — `memory-bank/index.md`; правила ведения банка — `memory-bank/maintenance.md`,
