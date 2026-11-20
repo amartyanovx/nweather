@@ -308,6 +308,23 @@ describe('guard-integrity', () => {
   );
 
   it(
+    'защищает изменения каталога harness',
+    () => {
+      const sandbox = createSandbox();
+      gitIn(sandbox, 'checkout', '-q', '-b', 'feature');
+      mkdirSync(path.join(sandbox.dir, 'harness'), { recursive: true });
+      commitFiles(sandbox, { 'harness/main-session.md': '# rules\n' }, 'rules');
+
+      const { status, output } = runGate(sandbox, ['guard-integrity']);
+
+      expect(status).toBe(1);
+      expect(output).toContain('изменены защищённые файлы Harness/CI (1)');
+      expect(output).toContain('harness/main-session.md');
+    },
+    TIMEOUT_MS,
+  );
+
+  it(
     'не блокирует ветку, отставшую от базы: чужие изменения harness не считаются своими',
     () => {
       const sandbox = createSandbox();
