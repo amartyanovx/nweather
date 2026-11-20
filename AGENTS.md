@@ -28,9 +28,12 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   реализации; порядок — `harness/main-session.md` §«Независимое ревью».
 - Задача не сдаётся с открытыми Blocking/Major; отчёт — по форме `harness/main-session.md` §«Приёмка и отчёт».
 - Memory Bank: чекпоинт `local/activeContext.md` после каждой задачи; архитектурные изменения — в `techContext.md` /
-  `systemPatterns.md`; правила — `memory-bank/maintenance.md`, `memory-bank/activeContextRules.md`.
-- Не более 10 существенных циклов на задачу; на пределе — фиксация нерешённого и решение человека.
-- Коммит, push, merge и production-деплой — только по прямому запросу.
+  `systemPatterns.md`; детали и порядок — `harness/main-session.md` §«Memory Bank»; правила ведения —
+  `memory-bank/maintenance.md`, `memory-bank/activeContextRules.md`.
+- Не более 10 существенных циклов на задачу; на пределе — фиксация нерешённого и решение человека. Детали и порядок —
+  `harness/main-session.md` §«Ограничения».
+- Коммит, push, merge и production-деплой — только по прямому запросу; детали — `harness/main-session.md`
+  §«Приёмка и отчёт», разрешения — §«Полномочия».
 
 ## Обзор проекта
 
