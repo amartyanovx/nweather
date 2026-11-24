@@ -53,7 +53,8 @@
   исполняет хук и без него. `core.fileMode` установщик не меняет — это пользовательская настройка. Если прежний
   `core.hooksPath` отличался, установщик печатает его значение и источник (`git config --show-origin --get`): локальное
   значение возвращается `git config core.hooksPath "<прежнее>"`, глобальное — снятием локального переопределения
-  `git config --unset core.hooksPath`. Всё восстанавливается при `npm ci`/`npm install`.
+  `git config --unset core.hooksPath`. Повторный `npm ci`/`npm install` заново включает хук (`.githooks`), но прежнюю
+  конфигурацию не возвращает.
 - Pre-push: `.githooks/pre-push` → `scripts/pre-push.mts`; `prepare` ставит `core.hooksPath = .githooks` — общий конфиг
   для worktrees, относительный путь резолвится от корня worktree (worktree без `.githooks` молча остаётся без хука).
   Хук запускает полный gate на каждый push, кроме удалений (`local_sha` нулевой); без `node_modules` push блокируется.
