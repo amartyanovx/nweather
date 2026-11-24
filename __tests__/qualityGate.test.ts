@@ -480,7 +480,13 @@ describe('guard-integrity', () => {
 });
 
 describe('защищённые enforcement-файлы', () => {
-  it.each(['.githooks/pre-push', 'scripts/pre-push.mts', '__tests__/prePushHook.test.ts'])(
+  it.each([
+    '.githooks/pre-push',
+    'scripts/install-hooks.mts',
+    'scripts/pre-push.mts',
+    '__tests__/installHooks.test.ts',
+    '__tests__/prePushHook.test.ts',
+  ])(
     'защищает %s',
     (file) => {
       const sandbox = createSandbox();

@@ -21,7 +21,7 @@
     "stryker-ci": "stryker run --reporters=html,clear-text",
     "quality-gate": "node scripts/quality-gate.mts",
     "pre-push": "node scripts/pre-push.mts",
-    "hooks:install": "git config core.hooksPath .githooks",
+    "hooks:install": "node scripts/install-hooks.mts",
     "prepare": "npm run hooks:install",
     "reviewer:snapshot": "node scripts/reviewer-snapshot.mts"
   },

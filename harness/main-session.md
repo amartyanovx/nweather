@@ -67,7 +67,8 @@
   повода не запускай; дорогие шаги (E2E, мутации, сборка) — с обоснованием в отчёте
 - `npm run quality-gate` запускается автоматически pre-push-хуком при каждом push из worktree: полный набор стадий,
   FAIL блокирует push. Хук — `.githooks/pre-push` → `scripts/pre-push.mts`; установка — `prepare` после
-  `npm ci`/`npm install` (`git config core.hooksPath .githooks`), для существующего worktree — `npm run hooks:install`.
+  `npm ci`/`npm install` (`scripts/install-hooks.mts`: `core.hooksPath`, executable-бит, `core.fileMode=false`), для
+  существующего worktree — `npm run hooks:install`.
   Проверка активности — `git config --get core.hooksPath` (ожидается `.githooks`); откат —
   `git config --unset core.hooksPath`. `core.hooksPath` общий для worktrees, поэтому worktree без `.githooks` молча не
   запускает хук

@@ -31,23 +31,27 @@
 
 ## Команды
 
-| Команда                     | Назначение                                                                                               |
-| --------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `npm run dev`               | dev-сервер, порт 3000 — гаси после задачи                                                                |
-| `npm run lint`              | oxlint                                                                                                   |
-| `npm run typecheck`         | проверка типов (`tsc --noEmit`)                                                                          |
-| `npm test`                  | Jest с покрытием; порог и маппинг модулей — `jest.config.ts`                                             |
-| `npm run e2e`               | Playwright; нужна наполненная база (`npm run db:seed`), `webServer` сам делает `build && start`          |
-| `npm run mutate`            | Stryker, длительный прогон; пороги и globs — `.stryker.config.js`                                        |
-| `npm run build`             | production-сборка (`.next/`, native `better-sqlite3`)                                                    |
-| `npm run quality-gate`      | AI Quality Gate: артефакты, guard Harness/CI, lint, typecheck, fallow audit (`scripts/quality-gate.mts`) |
-| `npm run pre-push`          | ручной запуск логики pre-push-хука без `git push`                                                        |
-| `npm run hooks:install`     | включить pre-push-хук (`core.hooksPath = .githooks`)                                                     |
-| `npm run reviewer:snapshot` | снимок tracked/untracked состояния для read-only контроля reviewer                                       |
+| Команда                     | Назначение                                                                                                   |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `npm run dev`               | dev-сервер, порт 3000 — гаси после задачи                                                                    |
+| `npm run lint`              | oxlint                                                                                                       |
+| `npm run typecheck`         | проверка типов (`tsc --noEmit`)                                                                              |
+| `npm test`                  | Jest с покрытием; порог и маппинг модулей — `jest.config.ts`                                                 |
+| `npm run e2e`               | Playwright; нужна наполненная база (`npm run db:seed`), `webServer` сам делает `build && start`              |
+| `npm run mutate`            | Stryker, длительный прогон; пороги и globs — `.stryker.config.js`                                            |
+| `npm run build`             | production-сборка (`.next/`, native `better-sqlite3`)                                                        |
+| `npm run quality-gate`      | AI Quality Gate: артефакты, guard Harness/CI, lint, typecheck, fallow audit (`scripts/quality-gate.mts`)     |
+| `npm run pre-push`          | ручной запуск логики pre-push-хука без `git push`                                                            |
+| `npm run hooks:install`     | включить pre-push-хук (`core.hooksPath`, executable-бит, `core.fileMode=false`; `scripts/install-hooks.mts`) |
+| `npm run reviewer:snapshot` | снимок tracked/untracked состояния для read-only контроля reviewer                                           |
 
 - Назначенный worktree инициализируется локально: `npm ci` по `package-lock.json`; `node_modules` другого checkout не
   переиспользуется. `npm ci`/`npm install` выполняют `prepare` → `npm run hooks:install`, поэтому pre-push-хук
   включается без ручных шагов. `npm run quality-gate` запускается из корня этого worktree.
+- Установка хука выставляет executable-бит `.githooks/pre-push` и локальный `core.fileMode=false`: Git хранит режим в
+  индексе и дереве, но рабочая копия Windows его не материализует, а без бита POSIX-клон молча игнорирует хук.
+  `core.fileMode=false` не даёт mode-only расхождению выглядеть изменением защищённого `.githooks/**` — иначе guard
+  после `npm ci` блокировал бы каждый PR. Всё восстанавливается при `npm ci`/`npm install`.
 - Pre-push: `.githooks/pre-push` → `scripts/pre-push.mts`; `prepare` ставит `core.hooksPath = .githooks` — общий конфиг
   для worktrees, относительный путь резолвится от корня worktree (worktree без `.githooks` молча остаётся без хука).
   Хук запускает полный gate на каждый push, кроме удалений (`local_sha` нулевой); без `node_modules` push блокируется.
