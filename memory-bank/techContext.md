@@ -43,6 +43,8 @@
 | `npm run quality-gate`      | AI Quality Gate: артефакты, guard Harness/CI, lint, typecheck, fallow audit (`scripts/quality-gate.mts`) |
 | `npm run reviewer:snapshot` | снимок tracked/untracked состояния для read-only контроля reviewer                                       |
 
+- Назначенный worktree инициализируется локально: `npm ci` по `package-lock.json`; `node_modules` другого checkout не
+  переиспользуется. `npm run quality-gate` запускается из корня этого worktree; локальный ACK — по правилу ниже.
 - Точечное форматирование — `npx prettier --write <файлы>`, проверка — `npx prettier --check <файлы>`; `npm run format` и
   `format:check` берут весь репозиторий (LF зафиксирован в `.gitattributes`)
 - `npm run quality-gate` — первая стадия CI (`.github/workflows/ci.yml`), далее `Tests` и `Build`; подмножество стадий —
