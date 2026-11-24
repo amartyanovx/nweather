@@ -196,6 +196,25 @@ describe('artifact-hygiene', () => {
     },
     TIMEOUT_MS,
   );
+
+  it.each([
+    'mcp_settings.json',
+    '_mcp_settings.json',
+    'team_mcp_settings.json',
+    'team-mcp_settings.json',
+  ])(
+    'блокирует MCP-конфигурацию %s',
+    (file) => {
+      const sandbox = createSandbox();
+      writeFileSync(path.join(sandbox.dir, file), '{"token":"secret"}\n');
+
+      const { status, output } = runGate(sandbox, ['artifact-hygiene']);
+
+      expect(status).toBe(1);
+      expect(output).toContain(`${file} — настройки MCP: ключи и токены (untracked)`);
+    },
+    TIMEOUT_MS,
+  );
 });
 
 describe('guard-integrity', () => {
@@ -321,6 +340,30 @@ describe('guard-integrity', () => {
       expect(status).toBe(1);
       expect(output).toContain('изменены защищённые файлы Harness/CI (1)');
       expect(output).toContain('harness/main-session.md');
+    },
+    TIMEOUT_MS,
+  );
+
+  it.each([
+    'CLAUDE.md',
+    '.claude/CLAUDE.md',
+    '.omp/AGENTS.md',
+    '.omp/RULES.md',
+    '.rules',
+    '.zed/settings.json',
+  ])(
+    'защищает точку входа инструкций %s',
+    (file) => {
+      const sandbox = createSandbox();
+      gitIn(sandbox, 'checkout', '-q', '-b', 'feature');
+      mkdirSync(path.dirname(path.join(sandbox.dir, file)), { recursive: true });
+      commitFiles(sandbox, { [file]: '# rules\n' }, 'agent instructions');
+
+      const { status, output } = runGate(sandbox, ['guard-integrity']);
+
+      expect(status).toBe(1);
+      expect(output).toContain('изменены защищённые файлы Harness/CI (1)');
+      expect(output).toContain(file);
     },
     TIMEOUT_MS,
   );
