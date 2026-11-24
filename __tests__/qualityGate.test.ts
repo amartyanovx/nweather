@@ -15,6 +15,19 @@ import path from 'node:path';
 const GATE_SCRIPT = path.resolve(__dirname, '..', 'scripts', 'quality-gate.mts');
 const TIMEOUT_MS = 20_000;
 
+/** Реальные правила `.gitignore` проекта, а не копия: ignored-состояние проверяется на них. */
+const MCP_IGNORE_PATTERNS = readFileSync(path.resolve(__dirname, '..', '.gitignore'), 'utf8')
+  .split(/\r?\n/)
+  .map((line) => line.trim())
+  .filter((line) => line.length > 0 && !line.startsWith('#') && line.includes('mcp_settings'));
+
+const MCP_FILES = [
+  'mcp_settings.json',
+  '_mcp_settings.json',
+  'team_mcp_settings.json',
+  'team-mcp_settings.json',
+] as const;
+
 interface Sandbox {
   readonly dir: string;
   readonly summaryPath: string;
@@ -26,7 +39,12 @@ type GateEnv = { readonly NODE_ENV: 'test' } & Record<string, string>;
 
 const tempDirs: string[] = [];
 
-const createSandbox = (envIgnore = true): Sandbox => {
+interface SandboxOptions {
+  /** Содержимое `.gitignore` базового коммита. */
+  readonly ignore?: string;
+}
+
+const createSandbox = (options: SandboxOptions = {}): Sandbox => {
   const dir = mkdtempSync(path.join(tmpdir(), 'quality-gate-'));
   const configDir = mkdtempSync(path.join(tmpdir(), 'quality-gate-cfg-'));
   tempDirs.push(dir, configDir);
@@ -57,7 +75,7 @@ const createSandbox = (envIgnore = true): Sandbox => {
 
   const sandbox: Sandbox = { dir, summaryPath: path.join(configDir, 'summary.md'), env };
   gitIn(sandbox, 'init', '-q', '-b', 'master');
-  writeFileSync(path.join(dir, '.gitignore'), envIgnore ? '.env*\n' : 'node_modules/\n');
+  writeFileSync(path.join(dir, '.gitignore'), options.ignore ?? '.env*\n');
   writeFileSync(path.join(dir, 'README.md'), '# fixture\n');
   commitAll(sandbox, 'base');
   return sandbox;
@@ -171,7 +189,7 @@ describe('artifact-hygiene', () => {
   it(
     'допускает untracked .env.local вне .gitignore',
     () => {
-      const sandbox = createSandbox(false);
+      const sandbox = createSandbox({ ignore: 'node_modules/\n' });
       writeFileSync(path.join(sandbox.dir, '.env.development.local'), 'TOKEN=1\n');
 
       const { status, output } = runGate(sandbox, ['artifact-hygiene']);
@@ -193,6 +211,62 @@ describe('artifact-hygiene', () => {
       const { status } = runGate(sandbox, ['artifact-hygiene']);
 
       expect(status).toBe(0);
+    },
+    TIMEOUT_MS,
+  );
+
+  const sandboxWithMcpIgnore = (): Sandbox =>
+    createSandbox({ ignore: `${MCP_IGNORE_PATTERNS.join('\n')}\n` });
+
+  it.each(MCP_FILES)(
+    'блокирует untracked MCP-конфигурацию %s',
+    (file) => {
+      const sandbox = createSandbox();
+      writeFileSync(path.join(sandbox.dir, file), '{"token":"secret"}\n');
+
+      const state = gitIn(sandbox, 'status', '--porcelain', '--', file).trim();
+      const { status, output } = runGate(sandbox, ['artifact-hygiene']);
+
+      expect(state).toBe(`?? ${file}`);
+      expect(status).toBe(1);
+      expect(output).toContain(`${file} — настройки MCP: ключи и токены (untracked)`);
+    },
+    TIMEOUT_MS,
+  );
+
+  it.each(MCP_FILES)(
+    'блокирует ignored MCP-конфигурацию %s: .gitignore исключает файл из Git, gate видит его',
+    (file) => {
+      const sandbox = sandboxWithMcpIgnore();
+      writeFileSync(path.join(sandbox.dir, file), '{"token":"secret"}\n');
+
+      expect(gitIn(sandbox, 'check-ignore', '--quiet', '--', file)).toBe('');
+      expect(gitIn(sandbox, 'status', '--porcelain', '--ignored', '--', file).trim()).toBe(
+        `!! ${file}`,
+      );
+
+      const { status, output } = runGate(sandbox, ['artifact-hygiene']);
+
+      expect(status).toBe(1);
+      expect(output).toContain(`${file} — настройки MCP: ключи и токены (ignored)`);
+    },
+    TIMEOUT_MS,
+  );
+
+  it.each(MCP_FILES)(
+    'блокирует tracked MCP-конфигурацию %s, добавленную через git add -f в обход .gitignore',
+    (file) => {
+      const sandbox = sandboxWithMcpIgnore();
+      writeFileSync(path.join(sandbox.dir, file), '{"token":"secret"}\n');
+      gitIn(sandbox, 'add', '-f', '--', file);
+      commitAll(sandbox, 'forced mcp');
+
+      expect(gitIn(sandbox, 'ls-files', '--', file).trim()).toBe(file);
+
+      const { status, output } = runGate(sandbox, ['artifact-hygiene']);
+
+      expect(status).toBe(1);
+      expect(output).toContain(`${file} — настройки MCP: ключи и токены (tracked)`);
     },
     TIMEOUT_MS,
   );
@@ -325,36 +399,26 @@ describe('guard-integrity', () => {
     TIMEOUT_MS,
   );
 
-  it(
-    'блокирует новый файл инструкций в .clinerules',
-    () => {
+  it.each([
+    'CLAUDE.md',
+    '.claude/CLAUDE.md',
+    '.omp/AGENTS.md',
+    '.omp/RULES.md',
+    '.rules',
+    '.zed/settings.json',
+  ])(
+    'защищает точку входа инструкций %s',
+    (file) => {
       const sandbox = createSandbox();
       gitIn(sandbox, 'checkout', '-q', '-b', 'feature');
-      mkdirSync(path.join(sandbox.dir, '.clinerules'), { recursive: true });
-      commitFiles(sandbox, { '.clinerules/core.md': '# rules\n' }, 'legacy rules');
+      mkdirSync(path.dirname(path.join(sandbox.dir, file)), { recursive: true });
+      commitFiles(sandbox, { [file]: '# rules\n' }, 'agent instructions');
 
       const { status, output } = runGate(sandbox, ['guard-integrity']);
 
       expect(status).toBe(1);
       expect(output).toContain('изменены защищённые файлы Harness/CI (1)');
-      expect(output).toContain('.clinerules/core.md');
-    },
-    TIMEOUT_MS,
-  );
-
-  it(
-    'блокирует новый файл инструкций в .cline',
-    () => {
-      const sandbox = createSandbox();
-      gitIn(sandbox, 'checkout', '-q', '-b', 'feature');
-      mkdirSync(path.join(sandbox.dir, '.cline'), { recursive: true });
-      commitFiles(sandbox, { '.cline/instructions.md': '# rules\n' }, 'instrument rules');
-
-      const { status, output } = runGate(sandbox, ['guard-integrity']);
-
-      expect(status).toBe(1);
-      expect(output).toContain('изменены защищённые файлы Harness/CI (1)');
-      expect(output).toContain('.cline/instructions.md');
+      expect(output).toContain(file);
     },
     TIMEOUT_MS,
   );
