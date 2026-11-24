@@ -31,34 +31,39 @@
 
 ## Команды
 
-| Команда                     | Назначение                                                                                                   |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `npm run dev`               | dev-сервер, порт 3000 — гаси после задачи                                                                    |
-| `npm run lint`              | oxlint                                                                                                       |
-| `npm run typecheck`         | проверка типов (`tsc --noEmit`)                                                                              |
-| `npm test`                  | Jest с покрытием; порог и маппинг модулей — `jest.config.ts`                                                 |
-| `npm run e2e`               | Playwright; нужна наполненная база (`npm run db:seed`), `webServer` сам делает `build && start`              |
-| `npm run mutate`            | Stryker, длительный прогон; пороги и globs — `.stryker.config.js`                                            |
-| `npm run build`             | production-сборка (`.next/`, native `better-sqlite3`)                                                        |
-| `npm run quality-gate`      | AI Quality Gate: артефакты, guard Harness/CI, lint, typecheck, fallow audit (`scripts/quality-gate.mts`)     |
-| `npm run pre-push`          | ручной запуск логики pre-push-хука без `git push`                                                            |
-| `npm run hooks:install`     | включить pre-push-хук (`core.hooksPath`, executable-бит, `core.fileMode=false`; `scripts/install-hooks.mts`) |
-| `npm run reviewer:snapshot` | снимок tracked/untracked состояния для read-only контроля reviewer                                           |
+| Команда                     | Назначение                                                                                               |
+| --------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `npm run dev`               | dev-сервер, порт 3000 — гаси после задачи                                                                |
+| `npm run lint`              | oxlint                                                                                                   |
+| `npm run typecheck`         | проверка типов (`tsc --noEmit`)                                                                          |
+| `npm test`                  | Jest с покрытием; порог и маппинг модулей — `jest.config.ts`                                             |
+| `npm run e2e`               | Playwright; нужна наполненная база (`npm run db:seed`), `webServer` сам делает `build && start`          |
+| `npm run mutate`            | Stryker, длительный прогон; пороги и globs — `.stryker.config.js`                                        |
+| `npm run build`             | production-сборка (`.next/`, native `better-sqlite3`)                                                    |
+| `npm run quality-gate`      | AI Quality Gate: артефакты, guard Harness/CI, lint, typecheck, fallow audit (`scripts/quality-gate.mts`) |
+| `npm run pre-push`          | ручной запуск логики pre-push-хука без `git push`                                                        |
+| `npm run hooks:install`     | включить pre-push-хук (`core.hooksPath`, executable-бит; `scripts/install-hooks.mts`)                    |
+| `npm run reviewer:snapshot` | снимок tracked/untracked состояния для read-only контроля reviewer                                       |
 
 - Назначенный worktree инициализируется локально: `npm ci` по `package-lock.json`; `node_modules` другого checkout не
   переиспользуется. `npm ci`/`npm install` выполняют `prepare` → `npm run hooks:install`, поэтому pre-push-хук
   включается без ручных шагов. `npm run quality-gate` запускается из корня этого worktree.
-- Установка хука выставляет executable-бит `.githooks/pre-push` и локальный `core.fileMode=false`: Git хранит режим в
-  индексе и дереве, но рабочая копия Windows его не материализует, а без бита POSIX-клон молча игнорирует хук.
-  `core.fileMode=false` не даёт mode-only расхождению выглядеть изменением защищённого `.githooks/**` — иначе guard
-  после `npm ci` блокировал бы каждый PR. Всё восстанавливается при `npm ci`/`npm install`.
+- Установка хука выставляет `core.hooksPath = .githooks` и executable-бит `.githooks/pre-push`; режим `100755`
+  зафиксирован в индексе Git. Linux материализует бит при checkout, Windows его не представляет, но Git for Windows
+  исполняет хук и без него. `core.fileMode` установщик не меняет — это пользовательская настройка. Если прежний
+  `core.hooksPath` отличался, установщик печатает его значение и источник (`git config --show-origin --get`): локальное
+  значение возвращается `git config core.hooksPath "<прежнее>"`, глобальное — снятием локального переопределения
+  `git config --unset core.hooksPath`. Всё восстанавливается при `npm ci`/`npm install`.
 - Pre-push: `.githooks/pre-push` → `scripts/pre-push.mts`; `prepare` ставит `core.hooksPath = .githooks` — общий конфиг
   для worktrees, относительный путь резолвится от корня worktree (worktree без `.githooks` молча остаётся без хука).
   Хук запускает полный gate на каждый push, кроме удалений (`local_sha` нулевой); без `node_modules` push блокируется.
   Gate смотрит worktree/HEAD, а не запушенный ref: push другого ref из грязного или отставшего worktree полностью не
-  валидируется — барьер за CI. Обход — `git push --no-verify`; проверка активности — `git config --get core.hooksPath`,
-  откат — `git config --unset core.hooksPath`. Хук очищает унаследованный `CI` (guard работает как локальный) и
-  подставляет локальный ACK — SHA HEAD; это сигнал, авторизация остаётся за repository variable `HARNESS_ACK_SHA`.
+  валидируется — барьер за CI. Обход — `git push --no-verify`. `git config --get core.hooksPath` (`.githooks`)
+  показывает конфигурацию, а не работоспособность: фактическая проверка — push или прямой запуск `.githooks/pre-push`
+  (POSIX: `sh .githooks/pre-push </dev/null`). Откат — `git config --unset core.hooksPath`; прежнее локальное значение
+  возвращается `git config core.hooksPath "<прежнее>"`. Хук очищает унаследованный `CI` (guard работает как локальный)
+  и подставляет локальный ACK — SHA HEAD; это сигнал, авторизация и установка `HARNESS_ACK_SHA` — `AGENTS.md`
+  §«Полномочия».
   Без `QUALITY_GATE_BASE` guard берёт `origin/HEAD` → `master` (иначе SKIP); fallow — `origin/HEAD` → `origin/main` →
   `origin/master` → `master` → `main` (иначе FAIL: push блокируется).
 - Точечное форматирование — `npx prettier --write <файлы>`, проверка — `npx prettier --check <файлы>`; `npm run format` и
@@ -66,10 +71,11 @@
 - `npm run quality-gate` — первая стадия CI (`.github/workflows/ci.yml`), далее `Tests` и `Build`; подмножество стадий —
   `npm run quality-gate -- <стадия>`. Стадии gate: `artifact-hygiene` → `guard-integrity` → `lint` → `typecheck` →
   `fallow-audit`. Guard сверяет изменения от `merge-base` с базой PR. Подтверждение
-  правки защищённых Harness/CI-файлов — repository variable `HARNESS_ACK_SHA` (меняет только владелец репозитория);
-  значение действует только для своего коммита, поэтому новый коммит требует нового значения и повторного прогона
-  (`gh run rerun`: установка переменной событий Actions не создаёт). Локально SHA HEAD подставляет pre-push-хук; это
-  сигнал, а не авторизация — барьер дают переменная, required status check и ревью diff. Асимметрия сознательная: ignored/untracked `.env*.local` допускается, tracked — блокируется; ignored
+  правки защищённых Harness/CI-файлов — repository variable `HARNESS_ACK_SHA` (порядок авторизации и установки —
+  `AGENTS.md` §«Полномочия»); значение действует только для своего коммита, поэтому новый коммит требует нового значения
+  и повторного прогона (`gh run rerun`: установка переменной событий Actions не создаёт). Локально SHA HEAD подставляет
+  pre-push-хук; это сигнал, а не авторизация — барьер дают переменная, required status check и ревью diff. Асимметрия
+  сознательная: ignored/untracked `.env*.local` допускается, tracked — блокируется; ignored
   `.env`/`.env.production` блокируются. PR исполняет свою копию `ci.yml` и скрипта, поэтому защита harness — ревью diff и
   required check, а не сам скрипт. Барьер включён ruleset `master` на default branch (не legacy branch protection):
   required status checks «AI Quality Gate (static)» и «Build», плюс запрет deletion и force-push; обязательных ревью нет

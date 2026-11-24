@@ -48,7 +48,8 @@ const main = (): void => {
 
   // CI в окружении не должен превращать локальный guard в SKIP: gate запускается как локальный
   // (база — origin/HEAD/master), явный QUALITY_GATE_BASE по-прежнему имеет приоритет. SHA HEAD —
-  // локальный сигнал для guard, а не авторизация: барьер остаётся за repository variable HARNESS_ACK_SHA.
+  // локальный сигнал для guard, а не авторизация: правка Harness/CI авторизуется прямым указанием
+  // пользователя (AGENTS.md §«Полномочия»), барьер — repository variable, required checks и ревью diff.
   const head = resolveHead();
   const result = spawnSync('npm run quality-gate', {
     shell: true,

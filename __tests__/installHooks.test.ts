@@ -2,13 +2,14 @@
  * @jest-environment @stryker-mutator/jest-runner/jest-env/node
  */
 import { execFileSync, spawnSync } from 'node:child_process';
-import { chmodSync, mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 /**
- * Установка хука проверяется во временном git-репозитории: core.hooksPath и executable-бит.
- * На Windows Git не хранит режим, поэтому бит проверяется только на POSIX (CI — Linux).
+ * Установка хука проверяется во временном git-репозитории: core.hooksPath, executable-бит и
+ * неизменность core.fileMode. На Windows Git не материализует режим, поэтому бит проверяется
+ * только на POSIX (CI — Linux); режим в индексе проекта проверяется отдельно.
  */
 
 const INSTALL_SCRIPT = path.resolve(__dirname, '..', 'scripts', 'install-hooks.mts');
@@ -53,27 +54,38 @@ const createRepo = (): { dir: string; sandboxEnv: InstallEnv } => {
   return { dir, sandboxEnv };
 };
 
+const readConfig = (dir: string, sandboxEnv: InstallEnv, key: string): string =>
+  execFileSync('git', ['config', '--get', key], {
+    cwd: dir,
+    env: sandboxEnv,
+    encoding: 'utf8',
+  }).trim();
+
+const writeHook = (dir: string): string => {
+  const hookPath = path.join(dir, '.githooks', 'pre-push');
+  mkdirSync(path.dirname(hookPath), { recursive: true });
+  writeFileSync(hookPath, '#!/bin/sh\nexit 0\n');
+  return hookPath;
+};
+
 it(
-  'включает hook, выставляет executable-бит и не пачкает рабочее дерево',
+  'включает hook, выставляет executable-бит, не меняет core.fileMode и не пачкает дерево',
   () => {
     const { dir, sandboxEnv } = createRepo();
-    const hookPath = path.join(dir, '.githooks', 'pre-push');
-    mkdirSync(path.dirname(hookPath), { recursive: true });
-    writeFileSync(hookPath, '#!/bin/sh\nexit 0\n');
-    chmodSync(hookPath, 0o644);
+    const hookPath = writeHook(dir);
     execFileSync('git', ['add', '.githooks/pre-push'], { cwd: dir, env: sandboxEnv });
+    // Режим хранится в индексе: на Windows `chmod` бит не материализует, `update-index` работает.
+    execFileSync('git', ['update-index', '--chmod=+x', '.githooks/pre-push'], {
+      cwd: dir,
+      env: sandboxEnv,
+    });
     execFileSync('git', ['commit', '-q', '-m', 'hook'], { cwd: dir, env: sandboxEnv });
 
+    const fileModeBefore = readConfig(dir, sandboxEnv, 'core.fileMode');
     execFileSync(process.execPath, [INSTALL_SCRIPT], { cwd: dir, env: sandboxEnv });
 
-    const gitConfig = (key: string): string =>
-      execFileSync('git', ['config', '--get', key], {
-        cwd: dir,
-        env: sandboxEnv,
-        encoding: 'utf8',
-      }).trim();
-    expect(gitConfig('core.hooksPath')).toBe('.githooks');
-    expect(gitConfig('core.fileMode')).toBe('false');
+    expect(readConfig(dir, sandboxEnv, 'core.hooksPath')).toBe('.githooks');
+    expect(readConfig(dir, sandboxEnv, 'core.fileMode')).toBe(fileModeBefore);
     expect(
       execFileSync('git', ['status', '--porcelain'], {
         cwd: dir,
@@ -85,6 +97,42 @@ it(
     if (process.platform !== 'win32') {
       expect(statSync(hookPath).mode & 0o111).not.toBe(0);
     }
+  },
+  TIMEOUT_MS,
+);
+
+it(
+  'не перезаписывает явно заданный core.fileMode',
+  () => {
+    const { dir, sandboxEnv } = createRepo();
+    writeHook(dir);
+    execFileSync('git', ['config', 'core.fileMode', 'true'], { cwd: dir, env: sandboxEnv });
+
+    const result = spawnSync(process.execPath, [INSTALL_SCRIPT], { cwd: dir, env: sandboxEnv });
+
+    expect(result.status).toBe(0);
+    expect(readConfig(dir, sandboxEnv, 'core.fileMode')).toBe('true');
+  },
+  TIMEOUT_MS,
+);
+
+it(
+  'предупреждает о прежнем core.hooksPath и печатает команду восстановления',
+  () => {
+    const { dir, sandboxEnv } = createRepo();
+    writeHook(dir);
+    execFileSync('git', ['config', 'core.hooksPath', '.custom-hooks'], {
+      cwd: dir,
+      env: sandboxEnv,
+    });
+
+    const result = spawnSync(process.execPath, [INSTALL_SCRIPT], { cwd: dir, env: sandboxEnv });
+
+    expect(result.status).toBe(0);
+    const stderr = result.stderr.toString();
+    expect(stderr).toContain('core.hooksPath был ".custom-hooks"');
+    expect(stderr).toContain('git config core.hooksPath ".custom-hooks"');
+    expect(readConfig(dir, sandboxEnv, 'core.hooksPath')).toBe('.githooks');
   },
   TIMEOUT_MS,
 );
@@ -103,6 +151,20 @@ it(
       env: sandboxEnv,
     });
     expect(hooksPath.status).not.toBe(0);
+  },
+  TIMEOUT_MS,
+);
+
+it(
+  'фиксирует режим 100755 хука в индексе проекта',
+  () => {
+    const root = path.resolve(__dirname, '..');
+    const entry = execFileSync('git', ['ls-files', '-s', '.githooks/pre-push'], {
+      cwd: root,
+      encoding: 'utf8',
+    }).trim();
+
+    expect(entry.split(/\s+/)[0]).toBe('100755');
   },
   TIMEOUT_MS,
 );

@@ -291,6 +291,8 @@ describe('guard-integrity', () => {
       expect(output).toContain('изменены защищённые файлы Harness/CI (1)');
       expect(output).toContain('подтверждения для этого коммита нет');
       expect(output).toContain('HARNESS_ACK_SHA');
+      expect(output).toContain('прямом указании пользователя');
+      expect(output).not.toContain('ставит владелец');
     },
     TIMEOUT_MS,
   );
