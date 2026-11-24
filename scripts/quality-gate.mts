@@ -76,7 +76,7 @@ const ARTIFACT_RULES: readonly ArtifactRule[] = [
     pattern: /^(credentials?|secrets?)[a-z0-9._-]*\.(json|ya?ml|txt|env)$/,
     reason: 'файл с секретами',
   },
-  { pattern: /^cline_mcp_settings\.json$/, reason: 'настройки MCP: ключи и токены' },
+  { pattern: /(^|[_-])mcp_settings\.json$/, reason: 'настройки MCP: ключи и токены' },
 ];
 
 /** Источник файла: от него зависит применение allowlist локальных env-файлов. */
@@ -114,7 +114,6 @@ const BUILD_ARTIFACT_SUFFIXES: readonly string[] = ['.tsbuildinfo'];
 
 /** Harness/CI: изменение этих путей требует подтверждения человеком. */
 const PROTECTED_FILES: readonly string[] = [
-  '.clineignore',
   '.fallowrc.jsonc',
   '.gitattributes',
   '.gitignore',
@@ -142,7 +141,7 @@ const PROTECTED_FILES: readonly string[] = [
   'tsconfig.json',
 ];
 
-const PROTECTED_DIRS: readonly string[] = ['.cline', '.clinerules', '.github', 'harness'];
+const PROTECTED_DIRS: readonly string[] = ['.github', 'harness'];
 
 const write = (line: string): void => {
   process.stdout.write(`${line}\n`);

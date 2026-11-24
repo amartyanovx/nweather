@@ -37,9 +37,6 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
-# настройки MCP: содержат ключи и токены, в репозиторий не попадают
-/cline_mcp_settings.json
-
 # vercel
 .vercel
 
