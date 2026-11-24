@@ -137,13 +137,22 @@ const PROTECTED_FILES: readonly string[] = [
   'package.json',
   'playwright.config.ts',
   'scripts/quality-gate.mts',
+  'scripts/pre-push.mts',
   'scripts/reviewer-snapshot.mts',
+  '__tests__/prePushHook.test.ts',
   '__tests__/qualityGate.test.ts',
   '__tests__/reviewerSnapshot.test.ts',
   'tsconfig.json',
 ];
 
-const PROTECTED_DIRS: readonly string[] = ['.claude', '.github', '.omp', '.zed', 'harness'];
+const PROTECTED_DIRS: readonly string[] = [
+  '.claude',
+  '.githooks',
+  '.github',
+  '.omp',
+  '.zed',
+  'harness',
+];
 
 const write = (line: string): void => {
   process.stdout.write(`${line}\n`);
@@ -433,7 +442,7 @@ const runGuardIntegrity = (): StageResult => {
         ? `подтверждение относится к ${ackSha.slice(0, 12)} — для этого коммита нужно новое значение.`
         : 'подтверждения для этого коммита нет.',
       'Источник подтверждения: repository variable HARNESS_ACK_SHA = SHA коммита (ставит владелец репозитория).',
-      'Локально значение — сигнал; барьер дают repository variable, required status check и ревью diff.',
+      'Локально SHA HEAD подставляет pre-push-хук; это сигнал, барьер дают repository variable, required status check и ревью diff.',
     ],
   };
 };

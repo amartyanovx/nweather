@@ -20,6 +20,9 @@
     "mutate": "stryker run",
     "stryker-ci": "stryker run --reporters=html,clear-text",
     "quality-gate": "node scripts/quality-gate.mts",
+    "pre-push": "node scripts/pre-push.mts",
+    "hooks:install": "git config core.hooksPath .githooks",
+    "prepare": "npm run hooks:install",
     "reviewer:snapshot": "node scripts/reviewer-snapshot.mts"
   },
   "dependencies": {
@@ -50,7 +53,6 @@
     "babel-jest": "^30.5.2",
     "drizzle-kit": "^0.31.11",
     "fallow": "3.43.2",
-    "identity-obj-proxy": "^3.0.0",
     "jest": "^30.5.2",
     "jest-environment-jsdom": "^30.5.2",
     "oxlint": "^1.90.0",

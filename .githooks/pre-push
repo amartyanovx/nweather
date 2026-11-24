@@ -1,0 +1,4 @@
+#!/bin/sh
+# Полный quality-gate перед push; установка — `npm run hooks:install` (её же вызывает `prepare`
+# после `npm ci`/`npm install`). Аварийный обход — `git push --no-verify`, барьер — required CI checks.
+exec node scripts/pre-push.mts

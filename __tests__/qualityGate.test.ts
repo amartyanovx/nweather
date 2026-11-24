@@ -479,6 +479,25 @@ describe('guard-integrity', () => {
   );
 });
 
+describe('защищённые enforcement-файлы', () => {
+  it.each(['.githooks/pre-push', 'scripts/pre-push.mts', '__tests__/prePushHook.test.ts'])(
+    'защищает %s',
+    (file) => {
+      const sandbox = createSandbox();
+      gitIn(sandbox, 'checkout', '-q', '-b', 'feature');
+      mkdirSync(path.dirname(path.join(sandbox.dir, file)), { recursive: true });
+      commitFiles(sandbox, { [file]: '#!/bin/sh\n' }, 'enforcement');
+
+      const { status, output } = runGate(sandbox, ['guard-integrity']);
+
+      expect(status).toBe(1);
+      expect(output).toContain('изменены защищённые файлы Harness/CI (1)');
+      expect(output).toContain(file);
+    },
+    TIMEOUT_MS,
+  );
+});
+
 describe('fallow-audit', () => {
   it(
     'в CI с недоступной базой падает, а не пропускает проверку',

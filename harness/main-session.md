@@ -65,12 +65,22 @@
 - Команды, пороги и охват — `memory-bank/techContext.md`; стек проектный, новый не внедряй
 - Проверка валидна только для того содержимого, на котором получена: после правок затронутые проверки повторяются; без
   повода не запускай; дорогие шаги (E2E, мутации, сборка) — с обоснованием в отчёте
-- Если пользователь запросил PR, запусти `npm run quality-gate` локально непосредственно перед созданием PR и
-  завершением задачи. Успешный локальный прогон — условие создания PR и отчёта; ответ CI в GitHub не жди.
-  Required status checks GitHub («AI Quality Gate (static)», «Build») остаются условием merge; агент их не ожидает.
-  `Tests` и `Build` в условия сдачи агента не входят; локальная сборка — по матрице проверок. Для правок Harness/CI
-  локальный прогон выполняется с `QUALITY_GATE_HARNESS_ACK_SHA`, равным SHA коммита (локальный сигнал, не авторизация;
-  `memory-bank/techContext.md`)
+- `npm run quality-gate` запускается автоматически pre-push-хуком при каждом push из worktree: полный набор стадий,
+  FAIL блокирует push. Хук — `.githooks/pre-push` → `scripts/pre-push.mts`; установка — `prepare` после
+  `npm ci`/`npm install` (`git config core.hooksPath .githooks`), для существующего worktree — `npm run hooks:install`.
+  Проверка активности — `git config --get core.hooksPath` (ожидается `.githooks`); откат —
+  `git config --unset core.hooksPath`. `core.hooksPath` общий для worktrees, поэтому worktree без `.githooks` молча не
+  запускает хук
+- Push только удалений веток и тегов gate пропускает; без `node_modules` push блокируется сообщением о `npm ci`. Хук
+  проверяет текущее worktree/HEAD, а не запушенный ref: push другого ref из грязного или отставшего worktree полностью
+  не валидируется — барьер остаётся за CI
+- Аварийный обход — `git push --no-verify`; причина и непройденная проверка фиксируются в отчёте. Без прямого указания
+  пользователя обход не применяется
+- Локальный ACK правок Harness/CI хук подставляет сам — SHA текущего HEAD. Это сигнал для guard, а не авторизация:
+  авторизация остаётся за repository variable `HARNESS_ACK_SHA` (ставит владелец) и required status checks GitHub
+  («AI Quality Gate (static)», «Build»), которые остаются условием merge; агент их не ожидает. `Tests` и `Build` в
+  условия сдачи агента не входят; локальная сборка — по матрице проверок. Подмножество стадий для диагностики —
+  `npm run quality-gate -- <стадия>`
 - Локальный прогон невозможен (нет зависимостей) — сообщи это как ограничение; не выдавай CI за локальный
 - Изменённые файлы форматируй точечно, а не `npm run format` (команды и их область — `memory-bank/techContext.md`).
   Критерий приёмки — `prettier --check` по изменённым файлам
