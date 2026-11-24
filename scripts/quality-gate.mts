@@ -124,6 +124,7 @@ const PROTECTED_FILES: readonly string[] = [
   '.oxlintrc.json',
   '.prettierignore',
   '.prettierrc.json',
+  '.rules',
   '.stryker.config.js',
   'AGENTS.md',
   'CLAUDE.md',
@@ -142,14 +143,7 @@ const PROTECTED_FILES: readonly string[] = [
   'tsconfig.json',
 ];
 
-const PROTECTED_DIRS: readonly string[] = [
-  '.claude',
-  '.github',
-  '.omp',
-  '.rules',
-  '.zed',
-  'harness',
-];
+const PROTECTED_DIRS: readonly string[] = ['.claude', '.github', '.omp', '.zed', 'harness'];
 
 const write = (line: string): void => {
   process.stdout.write(`${line}\n`);
