@@ -81,6 +81,13 @@ describe('searchCities', () => {
     expect(searchCities(CITIES, ' м ')).toEqual([]);
   });
 
+  test('разделители не считаются значимыми символами', () => {
+    expect(searchCities(CITIES, 'м-')).toEqual([]);
+    expect(searchCities(CITIES, '-м')).toEqual([]);
+    expect(searchCities(CITIES, "м'")).toEqual([]);
+    expect(searchCities(CITIES, "'м")).toEqual([]);
+  });
+
   test('находит город по русскому названию с двух символов', () => {
     expect(names(searchCities(CITIES, 'Мо'))).toEqual(['Монреаль', 'Москва']);
   });

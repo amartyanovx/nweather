@@ -66,6 +66,15 @@ describe('CitySearch', () => {
     expect(input).toHaveAttribute('aria-expanded', 'false');
   });
 
+  test('не считает разделитель вторым значимым символом', () => {
+    const { input } = setup();
+
+    typeAndWait(input, 'М-');
+
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(input).toHaveAttribute('aria-expanded', 'false');
+  });
+
   test('показывает подсказки только после дебаунса', () => {
     const { input } = setup();
 
