@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import {
   MIN_QUERY_LENGTH,
-  normalizeForSearch,
+  countQueryChars,
   sanitizeCityInput,
   searchCities,
 } from '@/lib/cityQuery';
@@ -29,7 +29,7 @@ export default function CitySearch({ cities, selected, onSelect, onClear }: Prop
 
   const debouncedQuery = useDebouncedValue(query);
   const suggestions = searchCities(cities, debouncedQuery);
-  const hasQuery = normalizeForSearch(debouncedQuery).length >= MIN_QUERY_LENGTH;
+  const hasQuery = countQueryChars(debouncedQuery) >= MIN_QUERY_LENGTH;
   const isListOpen = isOpen && hasQuery;
   const activeCity = isListOpen ? suggestions[activeIndex] : undefined;
 

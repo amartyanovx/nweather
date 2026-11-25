@@ -19,6 +19,10 @@ export const normalizeForSearch = (value: string): string =>
 const splitWords = (value: string): string[] =>
   value.split(WORD_SEPARATORS).filter((word) => word.length > 0);
 
+/** Разделители не считаются значимыми символами, поэтому «м-» короче порога. */
+export const countQueryChars = (value: string): number =>
+  splitWords(normalizeForSearch(value)).join('').length;
+
 interface ScoredCity {
   city: CityDTO;
   startsWithName: boolean;
@@ -26,12 +30,9 @@ interface ScoredCity {
 
 /** Каждый токен — префикс слова в `name` или `nameEn`; совпадение с начала `name` идёт выше. */
 export const searchCities = (cities: CityDTO[], query: string): CityDTO[] => {
-  const normalized = normalizeForSearch(query);
+  if (countQueryChars(query) < MIN_QUERY_LENGTH) return [];
 
-  if (normalized.length < MIN_QUERY_LENGTH) return [];
-
-  const tokens = splitWords(normalized);
-  if (tokens.length === 0) return [];
+  const tokens = splitWords(normalizeForSearch(query));
 
   const joinedQuery = tokens.join(' ');
   const matches: ScoredCity[] = [];
