@@ -291,6 +291,8 @@ describe('guard-integrity', () => {
       expect(output).toContain('изменены защищённые файлы Harness/CI (1)');
       expect(output).toContain('подтверждения для этого коммита нет');
       expect(output).toContain('HARNESS_ACK_SHA');
+      expect(output).toContain('прямом указании пользователя');
+      expect(output).not.toContain('ставит владелец');
     },
     TIMEOUT_MS,
   );
@@ -474,6 +476,31 @@ describe('guard-integrity', () => {
       expect(status).toBe(1);
       expect(output).toContain('[FAIL] guard-integrity');
       expect(output).toContain('отсутствует в истории');
+    },
+    TIMEOUT_MS,
+  );
+});
+
+describe('защищённые enforcement-файлы', () => {
+  it.each([
+    '.githooks/pre-push',
+    'scripts/install-hooks.mts',
+    'scripts/pre-push.mts',
+    '__tests__/installHooks.test.ts',
+    '__tests__/prePushHook.test.ts',
+  ])(
+    'защищает %s',
+    (file) => {
+      const sandbox = createSandbox();
+      gitIn(sandbox, 'checkout', '-q', '-b', 'feature');
+      mkdirSync(path.dirname(path.join(sandbox.dir, file)), { recursive: true });
+      commitFiles(sandbox, { [file]: '#!/bin/sh\n' }, 'enforcement');
+
+      const { status, output } = runGate(sandbox, ['guard-integrity']);
+
+      expect(status).toBe(1);
+      expect(output).toContain('изменены защищённые файлы Harness/CI (1)');
+      expect(output).toContain(file);
     },
     TIMEOUT_MS,
   );

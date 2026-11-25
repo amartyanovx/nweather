@@ -38,8 +38,8 @@ jobs:
       - name: Static quality gate
         env:
           QUALITY_GATE_BASE: ${{ github.event.pull_request.base.sha }}
-          # Подтверждение изменений Harness/CI: repository variable (меняет только владелец репозитория),
-          # действует лишь для своего коммита.
+          # Подтверждение изменений Harness/CI: repository variable (ставится агентом только при прямом
+          # указании пользователя на правку harness), действует лишь для своего коммита.
           QUALITY_GATE_HARNESS_ACK_SHA: ${{ vars.HARNESS_ACK_SHA }}
         run: npm run quality-gate
 

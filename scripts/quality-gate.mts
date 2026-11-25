@@ -13,7 +13,8 @@
  *
  * Подтверждение изменений Harness/CI — repository variable `HARNESS_ACK_SHA` (в CI её передают как
  * `QUALITY_GATE_HARNESS_ACK_SHA`): значение действует только для своего коммита, новый коммит требует
- * нового подтверждения. Локальное значение — сигнал, а не авторизация.
+ * нового подтверждения. Локальное значение — сигнал, а не авторизация. Авторизация правки — прямое
+ * указание пользователя (`AGENTS.md` §«Полномочия»); без него защищённые файлы и переменная неприкосновенны.
  *
  * Стадия `fallow-audit` запускает `fallow audit --gate new-only` относительно merge-base с базой PR:
  * новые нарушения блокируют, унаследованные — нет; ошибка определения базы — FAIL, а не SKIP.
@@ -136,14 +137,25 @@ const PROTECTED_FILES: readonly string[] = [
   'package-lock.json',
   'package.json',
   'playwright.config.ts',
+  'scripts/install-hooks.mts',
   'scripts/quality-gate.mts',
+  'scripts/pre-push.mts',
   'scripts/reviewer-snapshot.mts',
+  '__tests__/installHooks.test.ts',
+  '__tests__/prePushHook.test.ts',
   '__tests__/qualityGate.test.ts',
   '__tests__/reviewerSnapshot.test.ts',
   'tsconfig.json',
 ];
 
-const PROTECTED_DIRS: readonly string[] = ['.claude', '.github', '.omp', '.zed', 'harness'];
+const PROTECTED_DIRS: readonly string[] = [
+  '.claude',
+  '.githooks',
+  '.github',
+  '.omp',
+  '.zed',
+  'harness',
+];
 
 const write = (line: string): void => {
   process.stdout.write(`${line}\n`);
@@ -432,8 +444,8 @@ const runGuardIntegrity = (): StageResult => {
       ackSha.length > 0
         ? `подтверждение относится к ${ackSha.slice(0, 12)} — для этого коммита нужно новое значение.`
         : 'подтверждения для этого коммита нет.',
-      'Источник подтверждения: repository variable HARNESS_ACK_SHA = SHA коммита (ставит владелец репозитория).',
-      'Локально значение — сигнал; барьер дают repository variable, required status check и ревью diff.',
+      'Источник подтверждения: repository variable HARNESS_ACK_SHA = SHA коммита; устанавливается только при прямом указании пользователя на правку Harness/CI (AGENTS.md §«Полномочия»).',
+      'Локально SHA HEAD подставляет pre-push-хук; это сигнал, авторизацию и барьер дают repository variable, required status check и ревью diff.',
     ],
   };
 };
