@@ -46,50 +46,43 @@
 | `npm run reviewer:snapshot` | снимок tracked/untracked состояния для read-only контроля reviewer                                       |
 
 - Назначенный worktree инициализируется локально: `npm ci` по `package-lock.json`; `node_modules` другого checkout не
-  переиспользуется. `npm ci`/`npm install` выполняют `prepare` → `npm run hooks:install`, поэтому pre-push-хук
-  включается без ручных шагов. `npm run quality-gate` запускается из корня этого worktree.
-- Установка хука выставляет `core.hooksPath = .githooks` и executable-бит `.githooks/pre-push`; режим `100755`
-  зафиксирован в индексе Git. Linux материализует бит при checkout, Windows его не представляет, но Git for Windows
-  исполняет хук и без него. `core.fileMode` установщик не меняет — это пользовательская настройка. Если прежний
-  `core.hooksPath` отличался, установщик печатает его значение и источник (`git config --show-origin --get`): локальное
-  значение возвращается `git config core.hooksPath "<прежнее>"`, глобальное — снятием локального переопределения
-  `git config --unset core.hooksPath`. Повторный `npm ci`/`npm install` заново включает хук (`.githooks`), но прежнюю
-  конфигурацию не возвращает.
-- Pre-push: `.githooks/pre-push` → `scripts/pre-push.mts`; `prepare` ставит `core.hooksPath = .githooks` — общий конфиг
-  для worktrees, относительный путь резолвится от корня worktree (worktree без `.githooks` молча остаётся без хука).
-  Хук запускает полный gate на каждый push, кроме удалений (`local_sha` нулевой); без `node_modules` push блокируется.
-  Gate смотрит worktree/HEAD, а не запушенный ref: push другого ref из грязного или отставшего worktree полностью не
-  валидируется — барьер за CI. Обход — `git push --no-verify`. `git config --get core.hooksPath` (`.githooks`)
-  показывает конфигурацию, а не работоспособность: фактическая проверка — push или прямой запуск `.githooks/pre-push`
-  (POSIX: `sh .githooks/pre-push </dev/null`). Откат — `git config --unset core.hooksPath`; прежнее локальное значение
-  возвращается `git config core.hooksPath "<прежнее>"`. Хук очищает унаследованный `CI` (guard работает как локальный)
-  и подставляет локальный ACK — SHA HEAD; это сигнал, авторизация и установка `HARNESS_ACK_SHA` — `AGENTS.md`
-  §«Полномочия».
-  Без `QUALITY_GATE_BASE` guard берёт `origin/HEAD` → `master` (иначе SKIP); fallow — `origin/HEAD` → `origin/main` →
-  `origin/master` → `master` → `main` (иначе FAIL: push блокируется).
-- Точечное форматирование — `npx prettier --write <файлы>`, проверка — `npx prettier --check <файлы>`; `npm run format` и
-  `format:check` берут весь репозиторий (LF зафиксирован в `.gitattributes`)
-- `npm run quality-gate` — первая стадия CI (`.github/workflows/ci.yml`), далее `Tests` и `Build`; подмножество стадий —
-  `npm run quality-gate -- <стадия>`. Стадии gate: `artifact-hygiene` → `guard-integrity` → `lint` → `typecheck` →
-  `fallow-audit`. Guard сверяет изменения от `merge-base` с базой PR. Подтверждение
-  правки защищённых Harness/CI-файлов — repository variable `HARNESS_ACK_SHA` (порядок авторизации и установки —
-  `AGENTS.md` §«Полномочия»); значение действует только для своего коммита, поэтому новый коммит требует нового значения
-  и повторного прогона (`gh run rerun`: установка переменной событий Actions не создаёт). Локально SHA HEAD подставляет
-  pre-push-хук; это сигнал, а не авторизация — барьер дают переменная, required status check и ревью diff. Асимметрия
-  сознательная: ignored/untracked `.env*.local` допускается, tracked — блокируется; ignored
-  `.env`/`.env.production` блокируются. PR исполняет свою копию `ci.yml` и скрипта, поэтому защита harness — ревью diff и
-  required check, а не сам скрипт. Барьер включён ruleset `master` на default branch (не legacy branch protection):
-  required status checks «AI Quality Gate (static)» и «Build», плюс запрет deletion и force-push; обязательных ревью нет
-  (0 approvals), поэтому подтверждение harness держится на `HARNESS_ACK_SHA`. `SKIP` (нет базы) печатается как «не проверено»
-  и блокировкой не становится: exit code 0, барьер — ревью и required check. Ограничение: одно значение `HARNESS_ACK_SHA`
-  на репозиторий, поэтому параллельные PR с правкой harness конфликтуют; снятие — `--body ""`. CI — три стадии по
-  цепочке `needs`: «AI Quality Gate (static)» → `Tests` (`npm test`, включая регрессию gate
-  `__tests__/qualityGate.test.ts` и снимка `__tests__/reviewerSnapshot.test.ts`) → `Build`; следующая стартует только при
-  зелёной предыдущей. Lint/typecheck —
-  однократно в первой стадии, тесты — однократно во второй. `fallow-audit` запускает `fallow audit --gate new-only` от
-  merge-base: блокируют только новые нарушения, унаследованный долг gate исключает; ошибка определения базы — FAIL, а не
-  SKIP. Конфиг `.fallowrc.jsonc` защищён guard'ом наравне со скриптом. `next build`
-  дополнительно проверяет типы по всему проекту — дублирование `tsc` в CI принято, проверку сборки не отключаем
+  переиспользуется. `prepare` запускает `npm run hooks:install`, поэтому pre-push-хук включается без ручных шагов. Gate
+  запускается из корня worktree
+- Хук: `.githooks/pre-push` → `scripts/pre-push.mts`; установщик выставляет `core.hooksPath = .githooks` и
+  executable-бит (режим `100755` зафиксирован в индексе; Linux материализует бит, Windows его не представляет, но Git for
+  Windows исполняет хук). `core.fileMode` не меняется. Если прежний `core.hooksPath` отличался, установщик печатает его
+  значение и источник (`git config --show-origin --get`): локальное значение возвращается
+  `git config core.hooksPath "<прежнее>"`, глобальное — `git config --unset core.hooksPath`. Повторный
+  `npm ci`/`npm install` заново включает хук (`.githooks`), но прежнюю конфигурацию не возвращает. `core.hooksPath` общий
+  для worktrees, относительный путь резолвится от корня worktree: worktree без `.githooks` молча остаётся без хука.
+  `git config --get core.hooksPath` показывает только конфигурацию; фактическая проверка — push или прямой запуск
+  `.githooks/pre-push` (POSIX: `sh .githooks/pre-push </dev/null`)
+- Pre-push запускает полный gate на каждый push, кроме удалений веток и тегов; без `node_modules` push блокируется
+  сообщением о `npm ci`. Хук проверяет текущие worktree/HEAD, а не запушенный ref, поэтому push другого ref из грязного
+  или отставшего worktree не валидируется — барьер за CI. Обход — `git push --no-verify`, только по прямому указанию
+  пользователя (`harness/main-session.md` §«Проверки»). Хук очищает унаследованный `CI` и подставляет локальный ACK = SHA
+  HEAD: сигнал, не авторизация
+- CI — три стадии по цепочке `needs`: «AI Quality Gate (static)» → `Tests` (Jest, включая регрессию gate
+  `__tests__/qualityGate.test.ts` и снимка `__tests__/reviewerSnapshot.test.ts`) → `Build`. Lint/typecheck — однократно в
+  первой стадии, тесты — во второй. Стадии gate: `artifact-hygiene` → `guard-integrity` → `lint` → `typecheck` →
+  `fallow-audit`; подмножество — `npm run quality-gate -- <стадия>`
+- Guard сверяет изменения от `merge-base` с базой PR; база — `QUALITY_GATE_BASE`, иначе `origin/HEAD` → `master` (иначе
+  SKIP). Fallow: `fallow audit --gate new-only`, база — `origin/HEAD` → `origin/main` → `origin/master` → `master` →
+  `main` (иначе FAIL: push блокируется). Блокируют только новые нарушения; ошибка определения базы — FAIL, а не SKIP.
+  `.fallowrc.jsonc` защищён guard'ом. `SKIP` печатается как «не проверено», exit code 0; барьер — ревью и required check
+- Подтверждение правки защищённых Harness/CI-файлов — repository variable `HARNESS_ACK_SHA` (в CI —
+  `QUALITY_GATE_HARNESS_ACK_SHA`); значение действует только для своего коммита, новый коммит требует нового значения и
+  повторного прогона (`gh run rerun`: установка переменной событий Actions не создаёт). Одно значение на репозиторий:
+  параллельные PR с правкой harness конфликтуют; снятие — `gh variable set HARNESS_ACK_SHA --body ""`. Асимметрия env:
+  ignored/untracked `.env*.local` допускается, tracked — блокируется; ignored `.env`/`.env.production` блокируются. PR
+  исполняет свою копию `ci.yml` и скрипта: защита — ревью diff и required check, не сам скрипт
+- Барьер `master` — ruleset (не legacy branch protection): required status checks «AI Quality Gate (static)» и «Build»,
+  запрет deletion и force-push; обязательных ревью нет (0 approvals), поэтому подтверждение harness держится на
+  `HARNESS_ACK_SHA`. Условия сдачи и ожидание проверок — `harness/main-session.md`
+- `next build` дополнительно проверяет типы по всему проекту — дублирование `tsc` в CI принято, проверку сборки не
+  отключаем
+- Точечное форматирование — `npx prettier --write <файлы>`, проверка — `npx prettier --check <файлы>`; `npm run format`
+  и `format:check` берут весь репозиторий (LF зафиксирован в `.gitattributes`)
 - Данные — `npm run db:generate`, `db:migrate`, `db:seed`, `db:reset` (необратимо, см. §«Данные»)
 
 ## API Endpoints
